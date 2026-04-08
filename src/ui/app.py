@@ -205,7 +205,7 @@ class OccurrenceSystem(ctk.CTk):
         tabs_frame.grid_columnconfigure(2, weight=1)
 
         self.aberta_tab_btn = ctk.CTkButton(tabs_frame,
-                                            text=f"Abertas",
+                                            text="Abertas",
                                             height=40,
                                             corner_radius=10,
                                             fg_color=self.colors['blue_pastel'],
@@ -216,7 +216,7 @@ class OccurrenceSystem(ctk.CTk):
         self.aberta_tab_btn.grid(row=0, column=0, padx=5, sticky='ew')
 
         self.andamento_tab_btn = ctk.CTkButton(tabs_frame,
-                                               text=f"Em Andamento",
+                                               text="Em Andamento",
                                                height=40,
                                                corner_radius=10,
                                                fg_color=self.colors['yellow_light'],
@@ -227,7 +227,7 @@ class OccurrenceSystem(ctk.CTk):
         self.andamento_tab_btn.grid(row=0, column=1, padx=5, sticky='ew')
 
         self.resolvida_tab_btn = ctk.CTkButton(tabs_frame,
-                                               text=f"Resolvidas",
+                                               text="Resolvidas",
                                                height=40,
                                                corner_radius=10,
                                                fg_color=self.colors['green_light'],
@@ -293,7 +293,7 @@ class OccurrenceSystem(ctk.CTk):
 
         if not filtered:
             empty_label = ctk.CTkLabel(self.scrollable_frame,
-                                       text=f"Nenhuma ocorrência neste status",
+                                       text="Nenhuma ocorrência neste status",
                                        font=ctk.CTkFont(size=14),
                                        text_color=self.colors['gray_text'])
             empty_label.pack(pady=50)
