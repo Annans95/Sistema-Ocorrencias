@@ -77,7 +77,7 @@ Resultado: nenhum problema encontrado no código.
 ---
 
 ## 🔢 Versionamento
-Versão atual: 0.0.1 
+Versão atual: 0.1.0 
 
 ---
 
