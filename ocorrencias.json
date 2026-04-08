@@ -1,0 +1,40 @@
+{
+  "proximo_id": 8,
+  "ocorrencias": [
+    {
+      "id": 3,
+      "titulo": "Pia quebrada no banheiro",
+      "descricao": "A pia do banheiro do setor está com vazamento constante, causando acúmulo de água no chão e risco de escorregamento para os funcionários.\nSetor: Recursos Humanos",
+      "status": "em andamento",
+      "data_criacao": "2026-04-08T17:46:14.110202"
+    },
+    {
+      "id": 4,
+      "titulo": "Mouse sem funcionamento",
+      "descricao": "O mouse utilizado na estação de trabalho do setor está apresentando falhas constantes de clique e movimentação, dificultando a execução das atividades.\nSetor: Recursos Humanos",
+      "status": "aberta",
+      "data_criacao": "2026-04-08T17:46:30.719207"
+    },
+    {
+      "id": 5,
+      "titulo": "Ar-condicionado com defeito",
+      "descricao": "O ar-condicionado do ambiente está desligando sozinho e não mantém a temperatura adequada, deixando o local desconfortável para os colaboradores.\nSetor: Recursos Humanos",
+      "status": "resolvida",
+      "data_criacao": "2026-04-08T17:46:50.615080"
+    },
+    {
+      "id": 6,
+      "titulo": "Usuário sem acesso ao sistema de folha",
+      "descricao": "Funcionários do setor de Recursos Humanos estão sem permissão para acessar o sistema de folha de pagamento, impedindo a realização de alterações e consultas necessárias.\nSetor: Recursos Humanos\nObservação: Necessita liberação pelo suporte de TI",
+      "status": "aberta",
+      "data_criacao": "2026-04-08T17:48:45.490565"
+    },
+    {
+      "id": 7,
+      "titulo": "Impressora do setor financeiro não responde",
+      "descricao": "A impressora compartilhada do setor Financeiro não está respondendo aos comandos de impressão de nenhum computador da rede, impossibilitando a emissão de documentos.\nSetor: Financeiro\nObservação: Requer suporte técnico de TI para diagnóstico de rede ou configuração",
+      "status": "aberta",
+      "data_criacao": "2026-04-08T17:49:06.997915"
+    }
+  ]
+}

@@ -8,6 +8,10 @@ Em ambientes corporativos, é comum que problemas internos (como falhas de TI, m
 ## 💡 Proposta da Solução
 Este projeto propõe um sistema simples de registro de ocorrências internas, permitindo cadastrar, visualizar e acompanhar o status de problemas dentro de uma organização. A aplicação simula um sistema de help desk utilizado em empresas, organizando as demandas de forma estruturada.
 
+O projeto pode ser usado de duas formas:
+- **CLI**: interface em linha de comando para operações rápidas
+- **GUI**: interface gráfica com CustomTkinter para uma experiência visual mais amigável
+
 ---
 
 ## 🎯 Público-Alvo
@@ -18,14 +22,26 @@ Este projeto propõe um sistema simples de registro de ocorrências internas, pe
 ---
 
 ## ⚙️ Funcionalidades Principais
-- Criar ocorrências
-- Listar ocorrências cadastradas
-- Atualizar status das ocorrências (aberta, em andamento, resolvida)
+- **CLI**
+	- Criar ocorrências
+	- Listar ocorrências cadastradas de forma resumida
+	- Atualizar status das ocorrências (aberta, em andamento, resolvida)
+	- Ver detalhes completos de uma ocorrência
+	- Excluir ocorrências
+
+- **GUI**
+	- Criar ocorrências pelo formulário lateral
+	- Visualizar ocorrências em cards organizados por status
+	- Ver detalhes de uma ocorrência em uma janela dedicada
+	- Atualizar o status para frente ou para trás
+	- Excluir ocorrências
+	- Persistir os dados automaticamente em arquivo JSON
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 - Python 3
+- CustomTkinter
 - Pytest (testes automatizados)
 - Ruff (linting/análise estática)
 - Git e GitHub
@@ -53,10 +69,20 @@ pip install -r requirements.txt
 ---
 
 ## ▶️ Execução
-Para rodar a aplicação:
+Com o ambiente virtual ativado, você pode usar qualquer uma das interfaces abaixo:
+
+### CLI (linha de comando)
 ```bash
 python src/main.py
 ```
+
+### GUI (interface gráfica)
+```bash
+python src/ui/app.py
+```
+
+As duas interfaces usam o mesmo arquivo de persistência: `ocorrencias.json` na raiz do projeto.
+Ou seja, uma ocorrência criada pela CLI aparece na GUI (e vice-versa).
 ---
 
 ## 🧪 Testes Automatizados
@@ -77,7 +103,7 @@ Resultado: nenhum problema encontrado no código.
 ---
 
 ## 🔢 Versionamento
-Versão atual: 0.1.0 
+Versão atual: 0.2.0
 
 ---
 
@@ -86,4 +112,4 @@ Anna Nicolly da Silva
 
 ---
 
-🔗 Repositóriohttps://github.com/Annans95/sistema-ocorrencias
+🔗 Repositório: https://github.com/Annans95/sistema-ocorrencias
