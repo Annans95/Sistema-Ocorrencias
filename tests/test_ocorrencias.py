@@ -2,6 +2,7 @@ from src.services.sistema import SistemaOcorrencias
 
 
 def criar_sistema_tmp(tmp_path):
+    # Cada teste usa seu próprio JSON temporário para não poluir dados reais.
     arquivo = tmp_path / "ocorrencias_test.json"
     return SistemaOcorrencias(arquivo_dados=arquivo)
 
@@ -56,6 +57,7 @@ def test_remover_ocorrencia(tmp_path):
 
 
 def test_persistencia_json_entre_instancias(tmp_path):
+    # Simula fechar e abrir o sistema para validar persistência no arquivo.
     arquivo = tmp_path / "persistencia.json"
     sistema = SistemaOcorrencias(arquivo_dados=arquivo)
     sistema.criar_ocorrencia("Ocorrencia Persistida", "Descricao Persistida")

@@ -4,6 +4,7 @@ sistema = SistemaOcorrencias()
 
 
 def validar_id(entrada):
+    # Centraliza a validação de ID para evitar repetição no menu.
     try:
         occ_id = int(entrada)
         if occ_id <= 0:
@@ -30,6 +31,7 @@ def listar_ocorrencias_resumidas():
         print("Nenhuma ocorrência cadastrada.")
         return
 
+    # A lista aqui é curta de propósito: detalhes completos ficam na opção 4.
     print("\n=== Ocorrências cadastradas ===")
     for ocorrencia in ocorrencias:
         print(f"id: {ocorrencia.id} - {ocorrencia.titulo} ({ocorrencia.status})")
@@ -40,6 +42,7 @@ def criar_ocorrencia():
     print("Digite 'v' a qualquer momento para voltar ao menu\n")
 
     titulo = input("Título: ").strip()
+    # "v" funciona como um atalho para voltar ao menu sem salvar nada.
     if titulo.lower() == "v":
         return
 
@@ -127,6 +130,7 @@ def excluir_ocorrencia():
         return
 
     confirmacao = input(f"Tem certeza que deseja excluir a ocorrência {occ_id}? (s/n): ").strip().lower()
+    # Exigimos confirmação explícita para evitar exclusão acidental.
     if confirmacao != "s":
         print("Exclusão cancelada")
         return

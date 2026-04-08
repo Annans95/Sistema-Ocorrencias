@@ -285,7 +285,7 @@ class OccurrenceSystem(ctk.CTk):
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
 
-        # Filtrar ocorrências
+        # Exibe só o status da aba ativa para manter a tela organizada.
         filtered = [
             o for o in self.sistema.ocorrencias
             if o.status == self.active_tab
@@ -453,6 +453,7 @@ class OccurrenceSystem(ctk.CTk):
         """Avançar o status da ocorrência: aberta -> em andamento -> resolvida"""
         occ = self.sistema.buscar_ocorrencia_por_id(occ_id)
         if occ:
+            # Fluxo linear de status para evitar combinações inválidas.
             status_order = ['aberta', 'em andamento', 'resolvida']
             current_index = status_order.index(occ.status) if occ.status in status_order else 0
 
@@ -472,6 +473,7 @@ class OccurrenceSystem(ctk.CTk):
 
         # Fundo com gradiente sutil
         details_window.configure(fg_color=self.colors['bg_gradient'])
+        # Esse bloco garante que a janela de detalhes abra na frente da principal.
         details_window.transient(self)
         details_window.lift()
         details_window.focus_force()
@@ -635,6 +637,7 @@ class OccurrenceSystem(ctk.CTk):
         """Retroceder o status da ocorrência: resolvida -> em andamento -> aberta"""
         occ = self.sistema.buscar_ocorrencia_por_id(occ_id)
         if occ:
+            # Usa a mesma ordem do avanço para manter consistência dos estados.
             status_order = ['aberta', 'em andamento', 'resolvida']
             current_index = status_order.index(occ.status) if occ.status in status_order else 0
 
@@ -670,6 +673,7 @@ class OccurrenceSystem(ctk.CTk):
 
     def refresh_stats(self):
         """Atualizar estatísticas."""
+        # Atualiza os números dos cards sem recriar os widgets do topo.
         if hasattr(self, 'aberta_number_label'):
             self.aberta_number_label.configure(text=str(self._count_by_status('aberta')))
 

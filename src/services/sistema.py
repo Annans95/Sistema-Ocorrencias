@@ -9,8 +9,10 @@ class SistemaOcorrencias:
         self.ocorrencias = []
         self.proximo_id = 1
         if arquivo_dados is None:
+            # Caminho padrão usado pela aplicação (raiz do projeto).
             self.arquivo_dados = Path(__file__).resolve().parents[2] / "ocorrencias.json"
         else:
+            # Permite injetar outro arquivo (ex.: testes com tmp_path).
             self.arquivo_dados = Path(arquivo_dados)
         self.carregar_dados()
 
@@ -43,6 +45,7 @@ class SistemaOcorrencias:
         self.ocorrencias = [
             o for o in self.ocorrencias if o.id != id
         ]
+        # Só grava no arquivo se realmente houve alteração.
         if len(self.ocorrencias) != tamanho_antigo:
             self.salvar_dados()
             return True
@@ -69,8 +72,10 @@ class SistemaOcorrencias:
                 Ocorrencia.from_dict(item)
                 for item in dados.get("ocorrencias", [])
             ]
+            # Garante que o próximo ID não "ande para trás" mesmo com arquivo editado manualmente.
             self.proximo_id = max(dados.get("proximo_id", 1), self._calcular_proximo_id())
         except (json.JSONDecodeError, OSError, KeyError, TypeError):
+            # Se o JSON estiver inválido/corrompido, o sistema inicia limpo para não travar.
             self.ocorrencias = []
             self.proximo_id = 1
 
