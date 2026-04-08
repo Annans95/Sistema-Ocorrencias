@@ -1,5 +1,7 @@
 # 🏢 Sistema de Registro de Ocorrências Internas
 
+![CI](https://github.com/Annans95/Sistema-Ocorrencias/actions/workflows/ci.yml/badge.svg)
+
 ## 📌 Descrição do Problema
 Em ambientes corporativos, é comum que problemas internos (como falhas de TI, manutenção, demandas operacionais) sejam registrados de forma desorganizada, muitas vezes em mensagens informais ou sem acompanhamento adequado. Isso pode gerar perda de informações, falta de priorização e dificuldade no controle das demandas.
 
@@ -83,6 +85,7 @@ python src/ui/app.py
 
 As duas interfaces usam o mesmo arquivo de persistência: `ocorrencias.json` na raiz do projeto.
 Ou seja, uma ocorrência criada pela CLI aparece na GUI (e vice-versa).
+
 ---
 
 ## 🧪 Testes Automatizados
@@ -98,7 +101,7 @@ Para verificar a qualidade do código:
 ruff check .
 ```
 Lint executado utilizando Ruff.
-Resultado: nenhum problema encontrado no código.
+Resultado: nenhum problema encontrado (all checks passed).
 
 ---
 
@@ -112,4 +115,4 @@ Anna Nicolly da Silva
 
 ---
 
-🔗 Repositório: https://github.com/Annans95/sistema-ocorrencias
+🔗 Repositório: https://github.com/Annans95/Sistema-Ocorrencias
