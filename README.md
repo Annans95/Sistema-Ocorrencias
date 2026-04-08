@@ -103,7 +103,7 @@ Resultado: nenhum problema encontrado no código.
 ---
 
 ## 🔢 Versionamento
-Versão atual: 0.2.0
+Versão atual: 1.0.0
 
 ---
 
