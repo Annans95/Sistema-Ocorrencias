@@ -13,6 +13,7 @@ class Ocorrencia:
         return f"{self.id} - {self.titulo} ({self.status})"
 
     def to_dict(self):
+        # Converte para um formato simples de salvar em JSON.
         return {
             "id": self.id,
             "titulo": self.titulo,
@@ -23,6 +24,7 @@ class Ocorrencia:
 
     @classmethod
     def from_dict(cls, data):
+        # Reconstrói o objeto vindo do JSON salvo no disco.
         ocorrencia = cls(data["id"], data["titulo"], data["descricao"])
         ocorrencia.status = data.get("status", "aberta")
 
