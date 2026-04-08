@@ -3,11 +3,15 @@ from pathlib import Path
 
 from src.models.ocorrencia import Ocorrencia
 
+
 class SistemaOcorrencias:
-    def __init__(self):
+    def __init__(self, arquivo_dados=None):
         self.ocorrencias = []
         self.proximo_id = 1
-        self.arquivo_dados = Path(__file__).resolve().parents[2] / "ocorrencias.json"
+        if arquivo_dados is None:
+            self.arquivo_dados = Path(__file__).resolve().parents[2] / "ocorrencias.json"
+        else:
+            self.arquivo_dados = Path(arquivo_dados)
         self.carregar_dados()
 
     def criar_ocorrencia(self, titulo, descricao):
