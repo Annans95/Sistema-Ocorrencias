@@ -71,6 +71,9 @@ Para verificar a qualidade do código:
 ```bash
 ruff check .
 ```
+Lint executado utilizando Ruff.
+Resultado: nenhum problema encontrado no código.
+
 ---
 
 ## 🔢 Versionamento
