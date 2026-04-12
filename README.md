@@ -30,6 +30,7 @@ O projeto pode ser usado de duas formas:
 	- Atualizar status das ocorrências (aberta, em andamento, resolvida)
 	- Ver detalhes completos de uma ocorrência
 	- Excluir ocorrências
+    - Persistir os dados automaticamente em arquivo JSON
 
 - **GUI**
 	- Criar ocorrências pelo formulário lateral
@@ -37,7 +38,7 @@ O projeto pode ser usado de duas formas:
 	- Ver detalhes de uma ocorrência em uma janela dedicada
 	- Atualizar o status para frente ou para trás
 	- Excluir ocorrências
-	- Persistir os dados automaticamente em arquivo JSON
+    - Persistir os dados automaticamente em arquivo JSON 
 
 ---
 
@@ -50,7 +51,26 @@ O projeto pode ser usado de duas formas:
 
 ---
 
+## 🖼️ Interface do Sistema
+
+### Tela principal
+![Tela principal](./docs/tela-principal.png)
+
+### Detalhes da ocorrência
+![Detalhes da ocorrência](./docs/tela-detalhe-ocorrencia.png)
+
+---
+
 ## 📦 Instalação
+
+Antes de começar, você precisa ter:
+
+- Python 3 instalado (recomendado: 3.10 ou superior)
+- Uma IDE ou editor de código (VS Code, PyCharm ou similar)
+
+---
+
+### 1. Baixe o projeto
 
 Clone o repositório:
 
@@ -58,20 +78,27 @@ Clone o repositório:
 git clone https://github.com/Annans95/Sistema-Ocorrencias.git
 cd Sistema-Ocorrencias
 ```
-Crie um ambiente virtual (opcional, mas recomendado):
-```bash
-python -m venv venv
-source venv/bin/activate   # Linux/Mac
-venv\Scripts\activate      # Windows
-```
-Instale as dependências:
+Ou baixe o ZIP diretamente pelo GitHub e extraia os arquivos.
+
+### 2. Instale as dependências
+Abra o terminal na pasta do projeto e execute:
 ```bash
 pip install -r requirements.txt
+```
+💡 Dica: Você pode criar um ambiente virtual para isolar as dependências do projeto:
+
+```bash
+python -m venv venv
+
+#Windows
+venv\Scripts\activate 
+#Linux/Mac
+source venv/bin/activate
 ```
 ---
 
 ## ▶️ Execução
-Com o ambiente virtual ativado, você pode usar qualquer uma das interfaces abaixo:
+Após instalar as dependências, você pode usar o sistema de duas formas:
 
 ### CLI (linha de comando)
 ```bash
@@ -115,4 +142,4 @@ Anna Nicolly da Silva
 
 ---
 
-🔗 Repositório: https://github.com/Annans95/Sistema-Ocorrencias
+🔗 Repositório: [Sistema de Ocorrências](https://github.com/Annans95/Sistema-Ocorrencias)
