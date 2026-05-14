@@ -1,5 +1,10 @@
 #rotas flask
+from pathlib import Path
 from threading import Lock
+import sys
+
+if __package__ in {None, ""}:
+    sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from flask import Flask, render_template, jsonify, request
 from src.services.sistema import SistemaOcorrencias
@@ -38,6 +43,7 @@ def index():
 @app.route("/api/ocorrencias")
 def api_ocorrencias():
     with sistema_lock:
+        sistema.carregar_dados()
         return jsonify([
             _ocorrencia_para_json(o) for o in sistema.listar_ocorrencias()
         ])
@@ -122,6 +128,7 @@ def excluir_ocorrencia_api(occ_id):
 @app.route("/api/equipamentos", methods=["GET"])
 def listar_equipamentos():
     with sistema_lock:
+        sistema.carregar_dados()
         return jsonify([
             e.to_dict() for e in sistema.listar_equipamentos()
         ])
@@ -142,13 +149,39 @@ def criar_equipamento():
         return jsonify(eq.to_dict()), 201
 
 
-@app.route("/api/equipamentos/<int:eq_id>", methods=["GET"])
-def obter_equipamento(eq_id):
+@app.route("/api/equipamentos/<int:eq_id>", methods=["GET", "PUT", "DELETE"])
+def equipamento_api(eq_id):
+    if request.method == "GET":
+        with sistema_lock:
+            eq = sistema.buscar_equipamento_por_id(eq_id)
+            if not eq:
+                return jsonify({"erro": "equipamento nao encontrado"}), 404
+            return jsonify(eq.to_dict())
+
+    if request.method == "PUT":
+        payload = request.get_json() or {}
+        nome = payload.get("nome")
+        codigo = payload.get("codigo")
+        localizacao = payload.get("localizacao")
+
+        if nome is not None:
+            nome = str(nome).strip()
+        if codigo is not None:
+            codigo = str(codigo).strip()
+        if localizacao is not None:
+            localizacao = str(localizacao).strip()
+
+        with sistema_lock:
+            if not sistema.atualizar_equipamento(eq_id, nome=nome, codigo=codigo, localizacao=localizacao):
+                return jsonify({"erro": "equipamento nao encontrado"}), 404
+
+            eq = sistema.buscar_equipamento_por_id(eq_id)
+            return jsonify(eq.to_dict())
+
     with sistema_lock:
-        eq = sistema.buscar_equipamento_por_id(eq_id)
-        if not eq:
+        if not sistema.remover_equipamento(eq_id):
             return jsonify({"erro": "equipamento nao encontrado"}), 404
-        return jsonify(eq.to_dict())
+        return jsonify({"ok": True})
 
 
 @app.route("/api/equipamentos/code/<codigo>", methods=["GET"])
@@ -178,6 +211,17 @@ def obter_url_qr_equipamento(eq_id):
         })
 
 
+@app.route('/api/reload', methods=['POST'])
+def reload_data_api():
+    """Recarrega os dados do arquivo JSON em tempo de execução (útil após edição manual)."""
+    with sistema_lock:
+        try:
+            sistema.carregar_dados()
+            return jsonify({"ok": True}), 200
+        except Exception as e:
+            return jsonify({"erro": str(e)}), 500
+
+
 # Serve a mesma SPA para rotas de deep-link de equipamento (QR codes apontam aqui)
 @app.route('/equipamentos', strict_slashes=False)
 def pagina_equipamentos_raiz():
@@ -193,4 +237,4 @@ def pagina_equipamento(caminhoCompleto):
 
 #inicia servidor
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5003, use_reloader=False)

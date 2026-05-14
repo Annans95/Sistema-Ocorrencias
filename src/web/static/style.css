@@ -471,6 +471,7 @@ body {
     color: #616161;
     margin-bottom: 0.75rem;
     line-height: 1.5;
+    line-clamp: 2;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -671,6 +672,74 @@ body {
     color: #2E7D32;
 }
 
+.botao-download-qr {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s;
+    background: #A5D6A7;
+    color: #1B5E20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.botao-download-qr:hover {
+    transform: scale(1.1);
+}
+
+.botao-editar-eq {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s;
+    background: #FFB74D;
+    color: #E65100;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    margin-right: 0.5rem;
+}
+
+.botao-editar-eq:hover {
+    transform: scale(1.1);
+}
+
+.botao-apagar-eq {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.3s;
+    background: #C62828;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    margin-right: 0.5rem;
+}
+
+.botao-apagar-eq:hover {
+    transform: scale(1.1);
+    background: #B71C1C;
+}
+
+.cabecalho-historico-acoes {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
 /* Modal */
 .modal {
     position: fixed;

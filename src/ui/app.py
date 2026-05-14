@@ -1,4 +1,6 @@
 import customtkinter as ctk
+from tkinter import messagebox
+
 from src.services.sistema import SistemaOcorrencias
 from src.models.ocorrencia import Ocorrencia
 
@@ -9,7 +11,7 @@ class OccurrenceSystem(ctk.CTk):
 
         # Configurações da janela
         self.title("Sistema de Ocorrências")
-        self.geometry("1400x900")
+        self.after(100, lambda: self.state('zoomed'))
 
         # Configurar tema
         ctk.set_appearance_mode("light")
@@ -38,6 +40,11 @@ class OccurrenceSystem(ctk.CTk):
         self.sistema = SistemaOcorrencias()
 
         self.active_tab = 'aberta'  # 'aberta', 'em andamento' ou 'resolvida'
+        self.equipamentos_window = None
+        self.equipamentos_lista_frame = None
+        self.equipamento_editando_id = None
+        self.equipamento_combo = None
+        self.equipamento_combo_map = {}
 
         self.configure(fg_color=self.colors['bg_gradient'])
         self.create_widgets()
@@ -72,6 +79,29 @@ class OccurrenceSystem(ctk.CTk):
 
         content = ctk.CTkFrame(header_frame, fg_color='transparent')
         content.pack(pady=20, padx=40)
+
+        actions = ctk.CTkFrame(content, fg_color='transparent')
+        actions.pack(side='right')
+
+        reload_btn = ctk.CTkButton(actions,
+                                   text='↻ Recarregar dados',
+                                   height=36,
+                                   corner_radius=10,
+                                   fg_color=self.colors['gray_light'],
+                                   text_color=self.colors['blue_dark'],
+                                   hover_color='#e5e7eb',
+                                   command=self.reload_data)
+        reload_btn.pack(side='left', padx=(0, 10))
+
+        equipamentos_btn = ctk.CTkButton(actions,
+                                          text='Equipamentos',
+                                          height=36,
+                                          corner_radius=10,
+                                          fg_color=self.colors['blue_pastel'],
+                                          text_color=self.colors['blue_dark'],
+                                          hover_color='#7dd3fc',
+                                          command=self.open_equipamentos_window)
+        equipamentos_btn.pack(side='left')
 
         # Título
         titulo = ctk.CTkLabel(content,
@@ -145,7 +175,7 @@ class OccurrenceSystem(ctk.CTk):
         self.resolvida_number_label = resolvida_number
 
     def create_form(self, parent):
-        form_frame = ctk.CTkFrame(parent, fg_color=self.colors['white'],
+        form_frame = ctk.CTkScrollableFrame(parent, fg_color=self.colors['white'],
                                   corner_radius=20)
         form_frame.grid(row=0, column=0, padx=10, sticky='nsew')
 
@@ -179,6 +209,30 @@ class OccurrenceSystem(ctk.CTk):
                                         border_color=self.colors['blue_pastel'])
         self.desc_text.pack(pady=(0, 15), padx=20, fill='x')
 
+        equipamento_label = ctk.CTkLabel(form_frame, text="Equipamento vinculado",
+                         font=ctk.CTkFont(size=12),
+                         text_color=self.colors['gray_text'])
+        equipamento_label.pack(pady=(0, 5), padx=20, anchor='w')
+
+        self.equipamento_combo = ctk.CTkComboBox(form_frame,
+                             values=['Nenhum equipamento'],
+                             height=40,
+                             corner_radius=10,
+                             button_color=self.colors['blue_pastel'],
+                             button_hover_color='#7dd3fc')
+        self.equipamento_combo.pack(pady=(0, 15), padx=20, fill='x')
+        self.equipamento_combo.set('Nenhum equipamento')
+
+        equipamento_btn = ctk.CTkButton(form_frame,
+                        text="Gerenciar Equipamentos",
+                        height=36,
+                        corner_radius=10,
+                        fg_color=self.colors['gray_light'],
+                        text_color=self.colors['blue_dark'],
+                        hover_color='#e5e7eb',
+                        command=self.open_equipamentos_window)
+        equipamento_btn.pack(pady=(0, 15), padx=20, fill='x')
+
         # Botão Registrar
         register_btn = ctk.CTkButton(form_frame,
                                      text="Registrar Ocorrência",
@@ -190,6 +244,8 @@ class OccurrenceSystem(ctk.CTk):
                                      font=ctk.CTkFont(size=14, weight='bold'),
                                      command=self.add_occurrence)
         register_btn.pack(pady=(0, 20), padx=20, fill='x')
+
+        self._refresh_equipamento_combo()
 
     def create_occurrence_list(self, parent):
         list_frame = ctk.CTkFrame(parent, fg_color=self.colors['white'],
@@ -373,6 +429,18 @@ class OccurrenceSystem(ctk.CTk):
                             wraplength=600)
         desc.pack(fill='x', padx=20, pady=5)
 
+        equipamento = self.sistema.buscar_equipamento_por_id(occ.equipamentoId)
+
+        if equipamento:
+            equipamento_label = ctk.CTkLabel(
+                card,
+                text=f"🖥 Equipamento: {equipamento.nome}",
+                font=ctk.CTkFont(size=11, weight='bold'),
+                text_color=self.colors['blue_dark']
+            )
+
+            equipamento_label.pack(anchor='w', padx=20, pady=(0, 10))
+
         # Footer com data e status
         footer = ctk.CTkFrame(card, fg_color='transparent')
         footer.pack(fill='x', padx=20, pady=(5, 15))
@@ -438,16 +506,310 @@ class OccurrenceSystem(ctk.CTk):
     def add_occurrence(self):
         titulo = self.titulo_entry.get().strip()
         descricao = self.desc_text.get('1.0', 'end-1c').strip()
+        equipamento_id = self._obter_equipamento_selecionado()
 
         if not titulo or not descricao:
             return
 
-        self.sistema.criar_ocorrencia(titulo, descricao)
+        self.sistema.criar_ocorrencia(titulo, descricao, equipamentoId=equipamento_id)
 
         self.titulo_entry.delete(0, 'end')
         self.desc_text.delete('1.0', 'end')
+        if self.equipamento_combo:
+            self.equipamento_combo.set('Nenhum equipamento')
 
         self.update_list()
+        self.reload_data()
+
+    def _obter_equipamento_selecionado(self):
+        if not self.equipamento_combo:
+            return None
+
+        selecionado = self.equipamento_combo.get().strip()
+        if not selecionado or selecionado == 'Nenhum equipamento':
+            return None
+
+        return self.equipamento_combo_map.get(selecionado)
+
+    def _refresh_equipamento_combo(self):
+        if not self.equipamento_combo:
+            return
+
+        equipamentos = sorted(self.sistema.equipamentos, key=lambda eq: eq.nome.lower())
+        opcoes = ['Nenhum equipamento']
+        self.equipamento_combo_map = {}
+
+        for equipamento in equipamentos:
+            rotulo = f"{equipamento.nome} ({equipamento.codigo})"
+            opcoes.append(rotulo)
+            self.equipamento_combo_map[rotulo] = equipamento.id
+
+        selecionado_atual = self.equipamento_combo.get().strip()
+        self.equipamento_combo.configure(values=opcoes)
+        if selecionado_atual in opcoes:
+            self.equipamento_combo.set(selecionado_atual)
+        else:
+            self.equipamento_combo.set('Nenhum equipamento')
+
+    def reload_data(self):
+        self.sistema.carregar_dados()
+        self.update_list()
+        self._refresh_equipamento_combo()
+        if self.equipamentos_window and self.equipamentos_window.winfo_exists():
+            self.refresh_equipamentos_window()
+
+    def open_equipamentos_window(self):
+        if self.equipamentos_window and self.equipamentos_window.winfo_exists():
+            self.equipamentos_window.lift()
+            self.equipamentos_window.focus_force()
+            return
+
+        window = ctk.CTkToplevel(self)
+        window.title('Equipamentos')
+        window.state('zoomed')
+        window.configure(fg_color=self.colors['bg_gradient'])
+        window.transient(self)
+        window.grab_set()
+        self.equipamentos_window = window
+
+        outer = ctk.CTkFrame(window, fg_color=self.colors['white'], corner_radius=20)
+        outer.pack(fill='both', expand=True, padx=20, pady=20)
+
+        header = ctk.CTkFrame(outer, fg_color='transparent')
+        header.pack(fill='x', padx=20, pady=(20, 10))
+
+        title = ctk.CTkLabel(header,
+                             text='Equipamentos',
+                             font=ctk.CTkFont(size=24, weight='bold'),
+                             text_color=self.colors['blue_dark'])
+        title.pack(side='left')
+
+        reload_btn = ctk.CTkButton(header,
+                                   text='↻ Recarregar',
+                                   height=34,
+                                   corner_radius=10,
+                                   fg_color=self.colors['gray_light'],
+                                   text_color=self.colors['blue_dark'],
+                                   hover_color='#e5e7eb',
+                                   command=self.reload_data)
+        reload_btn.pack(side='right')
+
+        body = ctk.CTkFrame(outer, fg_color='transparent')
+        body.pack(fill='both', expand=True, padx=20, pady=10)
+        body.grid_columnconfigure(0, weight=1)
+        body.grid_columnconfigure(1, weight=1)
+        body.grid_rowconfigure(0, weight=1)
+
+        form = ctk.CTkFrame(body, fg_color=self.colors['gray_light'], corner_radius=16)
+        form.grid(row=0, column=0, padx=(0, 10), sticky='nsew')
+
+        form_title = ctk.CTkLabel(form, text='Novo / Editar equipamento',
+                                  font=ctk.CTkFont(size=16, weight='bold'),
+                                  text_color=self.colors['blue_dark'])
+        form_title.pack(anchor='w', padx=16, pady=(16, 10))
+
+        self.eq_nome_entry = ctk.CTkEntry(form, placeholder_text='Nome do equipamento', height=40)
+        self.eq_nome_entry.pack(fill='x', padx=16, pady=(0, 10))
+
+        self.eq_codigo_entry = ctk.CTkEntry(form, placeholder_text='Código', height=40)
+        self.eq_codigo_entry.pack(fill='x', padx=16, pady=(0, 10))
+
+        self.eq_localizacao_entry = ctk.CTkEntry(form, placeholder_text='Localização', height=40)
+        self.eq_localizacao_entry.pack(fill='x', padx=16, pady=(0, 10))
+
+        buttons = ctk.CTkFrame(form, fg_color='transparent')
+        buttons.pack(fill='x', padx=16, pady=(0, 16))
+
+        self.eq_salvar_btn = ctk.CTkButton(buttons,
+                                           text='Salvar equipamento',
+                                           height=40,
+                                           corner_radius=10,
+                                           fg_color=self.colors['blue_pastel'],
+                                           text_color=self.colors['blue_dark'],
+                                           command=self.save_equipamento)
+        self.eq_salvar_btn.pack(side='left', fill='x', expand=True, padx=(0, 8))
+
+        cancelar_btn = ctk.CTkButton(buttons,
+                                     text='Limpar',
+                                     height=40,
+                                     corner_radius=10,
+                                     fg_color=self.colors['gray_light'],
+                                     text_color=self.colors['blue_dark'],
+                                     hover_color='#e5e7eb',
+                                     command=self.clear_equipamento_form)
+        cancelar_btn.pack(side='left', fill='x', expand=True, padx=(8, 0))
+
+        list_panel = ctk.CTkFrame(body, fg_color='transparent')
+        list_panel.grid(row=0, column=1, padx=(10, 0), sticky='nsew')
+
+        list_title = ctk.CTkLabel(list_panel,
+                                 text='Equipamentos cadastrados',
+                                 font=ctk.CTkFont(size=16, weight='bold'),
+                                 text_color=self.colors['blue_dark'])
+        list_title.pack(anchor='w', pady=(0, 10))
+
+        self.equipamentos_lista_frame = ctk.CTkScrollableFrame(list_panel, fg_color='transparent')
+        self.equipamentos_lista_frame.pack(fill='both', expand=True)
+        self._refresh_equipamento_combo()
+        self.refresh_equipamentos_window()
+
+    def refresh_equipamentos_window(self):
+        if not self.equipamentos_lista_frame:
+            return
+
+        for widget in self.equipamentos_lista_frame.winfo_children():
+            widget.destroy()
+
+        if not self.sistema.equipamentos:
+            empty = ctk.CTkLabel(self.equipamentos_lista_frame,
+                                 text='Nenhum equipamento cadastrado ainda.',
+                                 text_color=self.colors['gray_text'])
+            empty.pack(pady=40)
+            return
+
+        for equipamento in self.sistema.equipamentos:
+            card = ctk.CTkFrame(self.equipamentos_lista_frame,
+                                fg_color=self.colors['white'],
+                                corner_radius=14,
+                                border_width=1,
+                                border_color=self.colors['gray_light'])
+            card.pack(fill='x', pady=8, padx=4)
+
+            info = ctk.CTkLabel(card,
+                                text=f"{equipamento.nome}\nCódigo: {equipamento.codigo}\nLocalização: {equipamento.localização}",
+                                justify='left',
+                                anchor='w',
+                                text_color=self.colors['gray_text'])
+            info.pack(side='left', padx=16, pady=16, fill='x', expand=True)
+
+            vinculos = [o for o in self.sistema.ocorrencias if o.equipamentoId == equipamento.id]
+            vinculo_texto = 'Sem ocorrências vinculadas'
+            if vinculos:
+                titulos = ', '.join(o.titulo for o in vinculos[:2])
+                if len(vinculos) > 2:
+                    titulos += ', ...'
+                vinculo_texto = f'Vinculado a {len(vinculos)} ocorrência(s): {titulos}'
+
+            vinculo_label = ctk.CTkLabel(card,
+                                         text=vinculo_texto,
+                                         justify='left',
+                                         anchor='w',
+                                         text_color=self.colors['gray_text'],
+                                         font=ctk.CTkFont(size=12))
+            vinculo_label.pack(fill='x', padx=16, pady=(0, 12))
+
+            buttons_frame = ctk.CTkFrame(card, fg_color='transparent')
+            buttons_frame.pack(side='right', padx=16)
+
+            details_btn = ctk.CTkButton(
+                buttons_frame,
+                text='ℹ',
+                width=38,
+                height=36,
+                corner_radius=10,
+                fg_color=self.colors['blue_light'],
+                text_color=self.colors['blue_dark'],
+                command=lambda eq=equipamento: self.show_equipamento_details(eq)
+            )
+
+            details_btn.pack(side='left', padx=5)
+
+            edit_btn = ctk.CTkButton(buttons_frame,
+                                    text='✏️',
+                                    width=38,
+                                    height=36,
+                                    corner_radius=10,
+                                    fg_color=self.colors['blue_pastel'],
+                                    text_color=self.colors['blue_dark'],
+                                    command=lambda eq=equipamento: self.load_equipamento_for_edit(eq))
+            edit_btn.pack(side='left', padx=5)
+
+            delete_btn = ctk.CTkButton(buttons_frame,
+                                      text='🗑',
+                                      width=38,
+                                      height=36,
+                                      corner_radius=10,
+                                      fg_color=self.colors['red_light'],
+                                      text_color=self.colors['red_text'],
+                                      command=lambda eq=equipamento: self.delete_equipamento(eq.id))
+            delete_btn.pack(side='left', padx=5)
+
+            new_occ_btn = ctk.CTkButton(buttons_frame,
+                                        text='➕',
+                                        width=38,
+                                        height=36,
+                                        corner_radius=10,
+                                        fg_color=self.colors['green_light'],
+                                        text_color=self.colors['green_dark'],
+                                        command=lambda eq=equipamento: self.abrir_formulario_ocorrencia_com_equipamento(eq))
+            new_occ_btn.pack(side='left', padx=5)
+
+    def load_equipamento_for_edit(self, equipamento):
+        self.equipamento_editando_id = equipamento.id
+        self.eq_nome_entry.delete(0, 'end')
+        self.eq_nome_entry.insert(0, equipamento.nome)
+        self.eq_codigo_entry.delete(0, 'end')
+        self.eq_codigo_entry.insert(0, equipamento.codigo)
+        self.eq_localizacao_entry.delete(0, 'end')
+        self.eq_localizacao_entry.insert(0, equipamento.localizacao)
+        self.eq_salvar_btn.configure(text='Atualizar equipamento')
+
+    def delete_equipamento(self, eq_id: int):
+        equipamento = self.sistema.buscar_equipamento_por_id(eq_id)
+        if not equipamento:
+            messagebox.showerror('Erro', 'Equipamento não encontrado.')
+            return
+
+        if messagebox.askyesno('Confirmar', f'Apagar o equipamento "{equipamento.nome}"? As ocorrências associadas não serão afetadas.'):
+            if self.sistema.remover_equipamento(eq_id):
+                self.refresh_equipamentos_window()
+            else:
+                messagebox.showerror('Erro', 'Não foi possível apagar o equipamento.')
+
+    def clear_equipamento_form(self):
+        self.equipamento_editando_id = None
+        self.eq_nome_entry.delete(0, 'end')
+        self.eq_codigo_entry.delete(0, 'end')
+        self.eq_localizacao_entry.delete(0, 'end')
+        self.eq_salvar_btn.configure(text='Salvar equipamento')
+
+    def save_equipamento(self):
+        nome = self.eq_nome_entry.get().strip()
+        codigo = self.eq_codigo_entry.get().strip()
+        localizacao = self.eq_localizacao_entry.get().strip()
+
+        if not nome or not codigo or not localizacao:
+            messagebox.showwarning('Validação', 'Preencha nome, código e localização.')
+            return
+
+        if self.equipamento_editando_id is None:
+            self.sistema.criar_equipamento(nome, codigo, localizacao)
+        else:
+            if not self.sistema.atualizar_equipamento(self.equipamento_editando_id, nome=nome, codigo=codigo, localizacao=localizacao):
+                messagebox.showerror('Erro', 'Equipamento não encontrado.')
+                return
+
+        self.clear_equipamento_form()
+        self.reload_data()
+        self.refresh_equipamentos_window()
+
+    def abrir_formulario_ocorrencia_com_equipamento(self, equipamento):
+        if self.equipamentos_window and self.equipamentos_window.winfo_exists():
+            self.equipamentos_window.destroy()
+
+        if self.equipamento_combo:
+            rotulo = f"{equipamento.nome} ({equipamento.codigo})"
+            if rotulo not in self.equipamento_combo_map:
+                self._refresh_equipamento_combo()
+            self.equipamento_combo.set(rotulo)
+
+        self.title_entry_focus()
+
+    def title_entry_focus(self):
+        if hasattr(self, 'titulo_entry'):
+            self.lift()
+            self.focus_force()
+            self.titulo_entry.focus_set()
 
     def advance_status(self, occ_id: int):
         """Avançar o status da ocorrência: aberta -> em andamento -> resolvida"""
@@ -557,6 +919,27 @@ class OccurrenceSystem(ctk.CTk):
                                     padx=12,
                                     pady=6)
         status_value.pack(side='left')
+
+        equipamento = self.sistema.buscar_equipamento_por_id(occ.equipamentoId) if occ.equipamentoId else None
+        equipamento_frame = ctk.CTkFrame(info_frame, fg_color='transparent')
+        equipamento_frame.pack(fill='x', padx=15, pady=(5, 10))
+
+        equipamento_label = ctk.CTkLabel(equipamento_frame, text="Equipamento:",
+                                         font=ctk.CTkFont(size=13, weight='bold'),
+                                         text_color=self.colors['blue_dark'])
+        equipamento_label.pack(side='left', padx=(0, 15))
+
+        if equipamento:
+            equipamento_text = f"{equipamento.nome} | Código: {equipamento.codigo} | Local: {equipamento.localizacao}"
+        elif occ.equipamentoId is not None:
+            equipamento_text = f"ID {occ.equipamentoId} (não encontrado)"
+        else:
+            equipamento_text = 'Nenhum equipamento vinculado'
+
+        equipamento_value = ctk.CTkLabel(equipamento_frame, text=equipamento_text,
+                                         font=ctk.CTkFont(size=13),
+                                         text_color=self.colors['gray_text'])
+        equipamento_value.pack(side='left')
 
         # Separador
         separator = ctk.CTkFrame(main_frame, fg_color=self.colors['gray_light'], height=2)
@@ -687,6 +1070,87 @@ class OccurrenceSystem(ctk.CTk):
         """Obter status da ocorrência por ID."""
         occ = self.sistema.buscar_ocorrencia_por_id(occ_id)
         return occ.status if occ else None
+
+    def show_equipamento_details(self, equipamento):
+        details = ctk.CTkToplevel(self)
+        details.transient(self)
+        details.lift()
+        details.focus_force()
+        details.grab_set()
+
+        details.after(50, lambda: details.attributes('-topmost', True))
+        details.after(150, lambda: details.attributes('-topmost', False))
+
+        details.title(f"Equipamento - {equipamento.nome}")
+        details.geometry("900x700")
+
+        container = ctk.CTkFrame(details)
+        container.pack(fill='both', expand=True, padx=20, pady=20)
+
+        titulo = ctk.CTkLabel(
+            container,
+            text=equipamento.nome,
+            font=ctk.CTkFont(size=26, weight='bold')
+        )
+        titulo.pack(anchor='w', pady=(0, 20))
+
+        info = ctk.CTkLabel(
+            container,
+            text=(
+                f"Código: {equipamento.codigo}\n"
+                f"Localização: {equipamento.localizacao}"
+            ),
+            justify='left'
+        )
+        info.pack(anchor='w', pady=(0, 20))
+
+        subtitulo = ctk.CTkLabel(
+            container,
+            text="Ocorrências relacionadas",
+            font=ctk.CTkFont(size=18, weight='bold')
+        )
+        subtitulo.pack(anchor='w')
+
+        scroll = ctk.CTkScrollableFrame(container)
+        scroll.pack(fill='both', expand=True, pady=10)
+
+        ocorrencias = [
+            o for o in self.sistema.ocorrencias
+            if o.equipamentoId == equipamento.id
+        ]
+
+        if not ocorrencias:
+            vazio = ctk.CTkLabel(
+                scroll,
+                text="Nenhuma ocorrência vinculada."
+            )
+            vazio.pack(pady=20)
+
+        for occ in ocorrencias:
+            card = ctk.CTkFrame(scroll)
+            card.pack(fill='x', pady=8)
+
+            titulo_occ = ctk.CTkLabel(
+                card,
+                text=occ.titulo,
+                font=ctk.CTkFont(size=15, weight='bold')
+            )
+            titulo_occ.pack(anchor='w', padx=15, pady=(10, 0))
+
+            desc = ctk.CTkLabel(
+                card,
+                text=occ.descricao,
+                wraplength=700,
+                justify='left'
+            )
+            desc.pack(anchor='w', padx=15, pady=(5, 10))
+
+            detalhes_btn = ctk.CTkButton(
+                card,
+                text="Abrir ocorrência",
+                command=lambda o=occ: self.show_details(o)
+            )
+            detalhes_btn.pack(anchor='e', padx=15, pady=(0, 10))
 
 
 if __name__ == "__main__":
