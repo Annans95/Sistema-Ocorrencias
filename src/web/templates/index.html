@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ocorrências</title>
+   <link rel="stylesheet"
+href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header id="cabecalho">
+        <div class="cabecalho-container">
+            <div class="cabecalho-esquerda">
+                <button id="botaoVoltar" class="botao-voltar" style="display: none;">←</button>
+                <div class="cabecalho-icone" id="cabecalhoIconeContainer">📋</div>
+                <div>
+                    <h1 id="cabecalhoTitulo">Sistema de Ocorrências</h1>
+                    <p id="cabecalhoSubtitulo">Gerencie e acompanhe ocorrências internas</p>
+                </div>
+            </div>
+            <button id="botaoVerEquipamentos" class="botao-equipamentos">
+                📦 Ver Equipamentos
+            </button>
+        </div>
+    </header>
+
+    <main id="containerPrincipal">
+        <!-- Visualização de Ocorrências -->
+        <div id="visualizacaoOcorrencias" class="conteudo-visualizacao">
+            <!-- Cards de Estatísticas -->
+            <div id="cardsEstatisticas" class="grade-estatisticas"></div>
+
+            <!-- Layout Principal -->
+            <div class="grade-principal">
+                <!-- Formulário -->
+                <div class="container-formulario">
+                    <div class="card formulario-card">
+                        <div class="formulario-cabecalho">
+                            <div class="formulario-icone">+</div>
+                            <h2>Nova Ocorrência</h2>
+                        </div>
+                        <form id="formularioOcorrencia">
+                            <div class="grupo-formulario">
+                                <label for="inputTitulo">Título</label>
+                                <input type="text" id="inputTitulo" placeholder="Digite o título da ocorrência" required>
+                            </div>
+                            <div class="grupo-formulario">
+                                <label for="inputDescricao">Descrição</label>
+                                <textarea id="inputDescricao" rows="4" placeholder="Descreva os detalhes da ocorrência" required></textarea>
+                            </div>
+                            <div class="grupo-formulario">
+                                <label for="selectEquipamento">Equipamento (opcional)</label>
+                                <select id="selectEquipamento">
+                                    <option value="">Nenhum equipamento</option>
+                                </select>
+                                <button type="button" id="botaoAlternarFormularioEquipamento" class="botao-link">
+                                    📦 Cadastrar novo equipamento
+                                </button>
+                            </div>
+                            <div id="novoFormularioEquipamento" class="novo-formulario-equipamento" style="display: none;">
+                                <h3>Novo Equipamento</h3>
+                                <input type="text" id="nomeEquipamento" placeholder="Nome do equipamento">
+                                <input type="text" id="codigoEquipamento" placeholder="Código (ex: IMP-001)">
+                                <input type="text" id="localizacaoEquipamento" placeholder="Localização">
+                                <button type="button" id="botaoAdicionarEquipamento" class="botao-adicionar-equipamento">Adicionar Equipamento</button>
+                            </div>
+                            <button type="submit" class="botao-enviar">Registrar Ocorrência</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Lista de Ocorrências -->
+                <div class="container-lista">
+                    <div class="card lista-card">
+                        <!-- Abas -->
+                        <div class="abas">
+                            <button class="botao-aba ativo" data-status="aberta">Abertas (<span id="contagemAbertas">0</span>)</button>
+                            <button class="botao-aba" data-status="em_andamento">Em Andamento (<span id="contagemEmAndamento">0</span>)</button>
+                            <button class="botao-aba" data-status="resolvida">Resolvidas (<span id="contagemResolvidas">0</span>)</button>
+                        </div>
+                        <!-- Lista -->
+                        <div id="listaOcorrencias" class="lista-ocorrencias"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualização de Equipamentos -->
+        <div id="visualizacaoEquipamentos" class="conteudo-visualizacao" style="display: none;">
+            <div class="card equipamentos-card">
+                <h2>🔧 Equipamentos e Patrimônios</h2>
+                <p class="subtitulo">Clique em um equipamento para ver o histórico completo de ocorrências</p>
+                <div id="listaEquipamentos" class="lista-equipamentos"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Detalhes -->
+    <div id="modalDetalhes" class="modal" style="display: none;">
+        <div class="modal-sobreposicao"></div>
+        <div class="modal-conteudo">
+            <div class="modal-cabecalho">
+                <h2 id="modalTitulo">Detalhes da Ocorrência</h2>
+                <div class="modal-acoes">
+                    <button id="botaoEditar" class="botao-icone" title="Editar">✏️</button>
+                    <button id="botaoFecharModal" class="botao-icone">✖️</button>
+                </div>
+            </div>
+            <div id="modalCorpo" class="modal-corpo"></div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico do Equipamento -->
+    <div id="modalHistoricoEquipamento" class="modal" style="display: none;">
+        <div class="modal-sobreposicao"></div>
+        <div class="modal-conteudo modal-grande">
+            <div id="cabecalhoHistoricoEquipamento" class="cabecalho-historico-equipamento"></div>
+            <div id="corpoHistoricoEquipamento" class="modal-corpo"></div>
+        </div>
+    </div>
+
+     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+    carregarOcorrencias();
+});
+</script>
+
+</body>
+</html>
