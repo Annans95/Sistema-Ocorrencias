@@ -21,7 +21,7 @@ async function carregarOcorrencias() {
     try {
 
         const resposta =
-            await fetch('/api/ocorrencias');
+            await fetch('/api/ocorrencias', { cache: 'no-store' });
 
         if (!resposta.ok) {
             throw new Error(
@@ -46,7 +46,7 @@ async function carregarEquipamentos() {
     try {
 
         const resposta =
-            await fetch('/api/equipamentos');
+            await fetch('/api/equipamentos', { cache: 'no-store' });
 
         if (!resposta.ok) {
             throw new Error(
@@ -646,6 +646,12 @@ function visualizarHistoricoEquipamento(equipamentoId) {
     const equipamento = obterEquipamentoPorId(equipamentoId);
     if (!equipamento) return;
 
+    const urlEquipamento =
+`${window.location.origin}/equipamentos/${equipamento.codigo}`;
+
+const qrCodeUrl =
+`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(urlEquipamento)}`;
+
     estado.equipamentoSelecionado = equipamento;
     const ocorrencias = obterOcorrenciasPorEquipamento(equipamentoId)
         .sort((a, b) =>
@@ -677,9 +683,21 @@ function visualizarHistoricoEquipamento(equipamentoId) {
 
     //cabeçalho do modal
     cabecalho.innerHTML = `
-        <button class="botao-fechar-historico" onclick="fecharModalHistoricoEquipamento()">✖️</button>
-        <h2>${equipamento.nome}</h2>
-        <p><strong>Código:</strong> ${equipamento.codigo} | <strong>Local:</strong> ${equipamento.localizacao}</p>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+                <h2>${equipamento.nome}</h2>
+                <p><strong>Código:</strong> ${equipamento.codigo} | <strong>Local:</strong> ${equipamento.localizacao}</p>
+            </div>
+            <div class="cabecalho-historico-acoes">
+                <button type="button" class="botao-editar-eq" onclick="abrirEditarEquipamento()" title="Editar equipamento">✏️</button>
+                <button type="button" class="botao-apagar-eq" onclick="apagarEquipamento()" title="Apagar equipamento">🗑</button>
+                <button type="button" class="botao-download-qr" onclick="this.href='${qrCodeUrl}'; window.location.href=this.href" title="Baixar QR Code">⬇</button>
+                <button type="button" class="botao-fechar-historico" onclick="fecharModalHistoricoEquipamento()">✖️</button>
+            </div>
+        </div>
+        <button type="button" class="botao-primario" onclick="abrirNovaOcorrenciaEquipamento()" style="margin-bottom: 1rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            ➕ Nova ocorrência para este equipamento
+        </button>
         <div class="estatisticas-historico-equipamento">
             <div class="estatistica-historico">
                 <h3>${ocorrencias.length}</h3>
@@ -696,6 +714,13 @@ function visualizarHistoricoEquipamento(equipamentoId) {
             <div class="estatistica-historico">
                 <h3>${contagemResolvidas}</h3>
                 <p>Resolvidas</p>
+            </div>
+            <div class="qr-pequeno-container">
+                <img
+                    src="${qrCodeUrl}"
+                    alt="QR Code"
+                    class="qr-pequeno"
+                >
             </div>
         </div>
     `;
@@ -730,6 +755,56 @@ function visualizarHistoricoEquipamento(equipamentoId) {
     modal.style.display = 'flex';
 }
 
+function abrirEditarEquipamento() {
+    const equipamento = estado.equipamentoSelecionado;
+    if (!equipamento) return;
+
+    const cabecalho = document.getElementById('cabecalhoHistoricoEquipamento');
+    // renderiza formulário de edição no lugar do cabeçalho
+    cabecalho.innerHTML = `
+        <button type="button" class="botao-fechar-historico" onclick="fecharModalHistoricoEquipamento()">✖️</button>
+        <h2>Editar Equipamento</h2>
+        <div style="margin-top:0.5rem;">
+            <input id="editarEqNome" placeholder="Nome" value="${equipamento.nome}" style="width:60%; padding:6px; margin-right:8px;">
+            <input id="editarEqCodigo" placeholder="Código" value="${equipamento.codigo}" style="width:30%; padding:6px;">
+        </div>
+        <div style="margin-top:0.5rem;">
+            <input id="editarEqLocalizacao" placeholder="Localização" value="${equipamento.localizacao}" style="width:100%; padding:6px;">
+        </div>
+        <div style="margin-top:0.75rem; display:flex; gap:8px;">
+            <button type="button" class="botao-primario" onclick="salvarEdicaoEquipamento()">💾 Salvar</button>
+            <button type="button" class="botao-cancelar" onclick="visualizarHistoricoEquipamento('${equipamento.id}')">✖ Cancelar</button>
+        </div>
+    `;
+}
+
+async function salvarEdicaoEquipamento() {
+    const equipamento = estado.equipamentoSelecionado;
+    if (!equipamento) return;
+
+    const nome = document.getElementById('editarEqNome').value.trim();
+    const codigo = document.getElementById('editarEqCodigo').value.trim();
+    const localizacao = document.getElementById('editarEqLocalizacao').value.trim();
+
+    const payload = { nome, codigo, localizacao };
+
+    const resp = await fetch(`/api/equipamentos/${equipamento.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+        alert('Erro ao atualizar equipamento');
+        return;
+    }
+
+    // atualizar estado local e re-render
+    await carregarEquipamentos();
+    await carregarOcorrencias();
+    visualizarHistoricoEquipamento(equipamento.id);
+}
+
 function visualizarOcorrenciaDoHistorico(id) {
     if (!id) return;
 
@@ -745,6 +820,39 @@ function fecharModalHistoricoEquipamento() {
         modal.style.display = 'none';
     }
     estado.equipamentoSelecionado = null;
+}
+
+async function apagarEquipamento() {
+    const equipamento = estado.equipamentoSelecionado;
+    if (!equipamento) return;
+
+    if (!confirm(`Tem certeza que deseja apagar o equipamento "${equipamento.nome}"? Isso não afetará as ocorrências já registradas.`)) return;
+
+    const resp = await fetch(`/api/equipamentos/${equipamento.id}`, {
+        method: 'DELETE'
+    });
+
+    if (!resp.ok) {
+        alert('Erro ao apagar equipamento');
+        return;
+    }
+
+    await carregarEquipamentos();
+    await carregarOcorrencias();
+    fecharModalHistoricoEquipamento();
+    renderizarListaEquipamentos();
+}
+
+function abrirNovaOcorrenciaEquipamento() {
+    const equipamento = estado.equipamentoSelecionado;
+    if (!equipamento) return;
+
+    fecharModalHistoricoEquipamento();
+    estado.visualizacaoAtual = 'ocorrencias';
+    renderizar();
+
+    document.getElementById('selectEquipamento').value = equipamento.id;
+    document.getElementById('inputTitulo').focus();
 }
 
 // ==========================================
@@ -837,6 +945,37 @@ async function adicionarEquipamento() {
     }
 }
 
+async function recarregarDadosServidor() {
+    const botao = document.getElementById('botaoRecarregarDados');
+
+    try {
+        if (botao) {
+            botao.disabled = true;
+            botao.textContent = '⏳ Recarregando...';
+        }
+
+        const resposta = await fetch('/api/reload', {
+            method: 'POST'
+        });
+
+        if (!resposta.ok) {
+            throw new Error('Falha ao recarregar dados do servidor');
+        }
+
+        await carregarEquipamentos();
+        await carregarOcorrencias();
+        renderizar();
+    } catch (erro) {
+        console.error(erro);
+        alert('Não foi possível recarregar os dados agora.');
+    } finally {
+        if (botao) {
+            botao.disabled = false;
+            botao.textContent = '↻ Recarregar Dados';
+        }
+    }
+}
+
 // ==========================================
 // OUVINTES DE EVENTOS
 // ==========================================
@@ -880,6 +1019,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         renderizar();
     });
+
+    const botaoRecarregarDados = document.getElementById('botaoRecarregarDados');
+    if (botaoRecarregarDados) {
+        botaoRecarregarDados.addEventListener('click', recarregarDadosServidor);
+    }
 
     document.getElementById(
         'botaoVoltar'

@@ -218,6 +218,34 @@ class SistemaOcorrencias:
             None
         )
 
+    def remover_equipamento(self, id):
+        def _operacao():
+            tamanho_antigo = len(self.equipamentos)
+            self.equipamentos = [
+                e for e in self.equipamentos if e.id != id
+            ]
+            if len(self.equipamentos) != tamanho_antigo:
+                return True
+            return False
+        
+        return self._executar_atomicamente(_operacao)
+
+    def atualizar_equipamento(self, id, nome=None, codigo=None, localizacao=None):
+        def _operacao():
+            for e in self.equipamentos:
+                if e.id == id:
+                    if nome is not None:
+                        e.nome = nome
+                    if codigo is not None:
+                        e.codigo = codigo
+                    if localizacao is not None:
+                        e.localizacao = localizacao
+                        e.localização = localizacao
+                    return True
+            return False
+
+        return self._executar_atomicamente(_operacao)
+
     #salvar dados no JSON
     def salvar_dados(self):
         dados = {

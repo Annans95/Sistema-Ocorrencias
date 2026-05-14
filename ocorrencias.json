@@ -1,5 +1,5 @@
 {
-  "proximo_id": 30,
+  "proximo_id": 40,
   "ocorrencias": [
     {
       "id": 3,
@@ -13,14 +13,16 @@
       "titulo": "Mouse sem funcionamento",
       "descricao": "O mouse utilizado na estação de trabalho do setor está apresentando falhas constantes de clique e movimentação, dificultando a execução das atividades.\nSetor: Recursos Humanos",
       "status": "em andamento",
-      "data_criacao": "2026-04-08T17:46:30.719207"
+      "data_criacao": "2026-04-08T17:46:30.719207",
+      "equipamentoId": 30
     },
     {
       "id": 5,
       "titulo": "Ar-condicionado com defeito",
-      "descricao": "O ar-condicionado do ambiente está desligando sozinho e não mantém a temperatura adequada, deixando o local desconfortável para os colaboradores.\nSetor: Recursos Humanos",
+      "descricao": "O ar-condicionado do ambiente está desligando sozinho e não mantém a temperatura adequada, deixando o local desconfortável para os colaboradores.\nSetor: Financeiro",
       "status": "resolvida",
-      "data_criacao": "2026-04-08T17:46:50.615080"
+      "data_criacao": "2026-04-08T17:46:50.615080",
+      "equipamentoId": 38
     },
     {
       "id": 6,
@@ -36,22 +38,56 @@
       "status": "aberta",
       "data_criacao": "2026-04-08T17:49:06.997915",
       "equipamentoId": 9
-    },
-    {
-      "id": 16,
-      "titulo": "Impressora do setor do RH não para de imprimir",
-      "descricao": "A impressora compartilhada do setor do RH não está respondendo aos comandos de parar impressão.",
-      "status": "aberta",
-      "data_criacao": "2026-05-14T11:54:06.206206",
-      "equipamentoId": 9
     }
   ],
   "equipamentos": [
     {
       "id": 9,
-      "nome": "Impressora X",
-      "codigo": "IMP-01",
-      "localizacao": "Financeiro"
+      "nome": "Impressora HP LaserJet Pro M404dn",
+      "codigo": "IMP-FIN-001",
+      "localizacao": "Setor Financeiro"
+    },
+    {
+      "id": 30,
+      "nome": "Notebook Dell Latitude 5420",
+      "codigo": "NT-RH-014",
+      "localizacao": "Recursos Humanos"
+    },
+    {
+      "id": 31,
+      "nome": "Estação de Trabalho OptiPlex 7090",
+      "codigo": "CPU-TI-003",
+      "localizacao": "Tecnologia da Informação"
+    },
+    {
+      "id": 35,
+      "nome": "Roteador Cisco RV340",
+      "codigo": "NET-CPD-002",
+      "localizacao": "Sala de Servidores"
+    },
+    {
+      "id": 36,
+      "nome": "Scanner Epson WorkForce ES-400",
+      "codigo": "SC-ADM-005",
+      "localizacao": "Administrativo"
+    },
+    {
+      "id": 37,
+      "nome": "Projetor Epson PowerLite X49",
+      "codigo": "PJ-SALA-001",
+      "localizacao": "Sala de Reuniões 01"
+    },
+    {
+      "id": 38,
+      "nome": "Ar-Condicionado LG Dual Inverter 18000 BTUs",
+      "codigo": "CL-FIN-002",
+      "localizacao": "Setor Financeiro"
+    },
+    {
+      "id": 39,
+      "nome": "Servidor Dell PowerEdge T350",
+      "codigo": "SV-CPD-001",
+      "localizacao": "CPD"
     }
   ]
 }
