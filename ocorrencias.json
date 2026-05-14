@@ -1,5 +1,5 @@
 {
-  "proximo_id": 9,
+  "proximo_id": 30,
   "ocorrencias": [
     {
       "id": 3,
@@ -12,7 +12,7 @@
       "id": 4,
       "titulo": "Mouse sem funcionamento",
       "descricao": "O mouse utilizado na estação de trabalho do setor está apresentando falhas constantes de clique e movimentação, dificultando a execução das atividades.\nSetor: Recursos Humanos",
-      "status": "aberta",
+      "status": "em andamento",
       "data_criacao": "2026-04-08T17:46:30.719207"
     },
     {
@@ -34,7 +34,24 @@
       "titulo": "Impressora do setor financeiro não responde",
       "descricao": "A impressora compartilhada do setor Financeiro não está respondendo aos comandos de impressão de nenhum computador da rede, impossibilitando a emissão de documentos.\nSetor: Financeiro\nObservação: Requer suporte técnico de TI para diagnóstico de rede ou configuração",
       "status": "aberta",
-      "data_criacao": "2026-04-08T17:49:06.997915"
+      "data_criacao": "2026-04-08T17:49:06.997915",
+      "equipamentoId": 9
+    },
+    {
+      "id": 16,
+      "titulo": "Impressora do setor do RH não para de imprimir",
+      "descricao": "A impressora compartilhada do setor do RH não está respondendo aos comandos de parar impressão.",
+      "status": "aberta",
+      "data_criacao": "2026-05-14T11:54:06.206206",
+      "equipamentoId": 9
+    }
+  ],
+  "equipamentos": [
+    {
+      "id": 9,
+      "nome": "Impressora X",
+      "codigo": "IMP-01",
+      "localizacao": "Financeiro"
     }
   ]
 }

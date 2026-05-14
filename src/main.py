@@ -140,28 +140,34 @@ def excluir_ocorrencia():
     else:
         print("Não foi possível excluir a ocorrência")
 
-while True:
-    print("\n1 - Criar ocorrência")
-    print("2 - Listar ocorrências")
-    print("3 - Atualizar status")
-    print("4 - Ver detalhes da ocorrência")
-    print("5 - Excluir ocorrência")
-    print("0 - Sair")
 
-    opcao = input("Escolha: ")
+def menu():
+    while True:
+        print("\n1 - Criar ocorrência")
+        print("2 - Listar ocorrências")
+        print("3 - Atualizar status")
+        print("4 - Ver detalhes da ocorrência")
+        print("5 - Excluir ocorrência")
+        print("0 - Sair")
 
-    if opcao == "1":
-        criar_ocorrencia()
-    elif opcao == "2":
-        listar_ocorrencias_resumidas()
-    elif opcao == "3":
-        atualizar_status()
-    elif opcao == "4":
-        ver_detalhes()
-    elif opcao == "5":
-        excluir_ocorrencia()
-    elif opcao == "0":
-        break
+        opcao = input("Escolha: ")
 
-    else:
-        print("Opção inválida")
+        if opcao == "1":
+            criar_ocorrencia()
+        elif opcao == "2":
+            listar_ocorrencias_resumidas()
+        elif opcao == "3":
+            atualizar_status()
+        elif opcao == "4":
+            ver_detalhes()
+        elif opcao == "5":
+            excluir_ocorrencia()
+        elif opcao == "0":
+            break
+
+        else:
+            print("Opção inválida")
+
+
+if __name__ == "__main__":
+    menu()
