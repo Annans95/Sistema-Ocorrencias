@@ -1,6 +1,7 @@
 #rotas flask
 from pathlib import Path
 from threading import Lock
+from urllib.parse import quote_plus
 import sys
 
 if __package__ in {None, ""}:
@@ -33,6 +34,14 @@ def _ocorrencia_para_json(ocorrencia):
     dados = ocorrencia.to_dict()
     dados["status"] = _status_para_api(dados.get("status", ""))
     return dados
+
+
+def gerar_url_api_qr(url_destino: str, tamanho: str = "110x110") -> str:
+    dados_qr = quote_plus(url_destino)
+    return (
+        "https://api.qrserver.com/v1/create-qr-code/"
+        f"?size={tamanho}&data={dados_qr}"
+    )
 
 #Cria URL
 @app.route("/")
@@ -207,6 +216,7 @@ def obter_url_qr_equipamento(eq_id):
         return jsonify({
             "caminhoQr": caminhoQr,
             "urlAbsolutaQr": urlAbsolutaQr,
+            "urlApiQr": gerar_url_api_qr(urlAbsolutaQr),
             "codigo": eq.codigo,
         })
 

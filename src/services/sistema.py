@@ -81,41 +81,16 @@ class SistemaOcorrencias:
         
         return self._executar_atomicamente(_operacao)
 
-    def salvar_dados(self):
-        #Salva dados em memória para o JSON (deve ser chamado dentro de _executar_atomicamente).
-        dados = {
-            "proximo_id": self.proximo_id,
-            "ocorrencias": [ocorrencia.to_dict() for ocorrencia in self.ocorrencias],
-        }
-
-        with self.arquivo_dados.open("w", encoding="utf-8") as arquivo:
-            json.dump(dados, arquivo, ensure_ascii=False, indent=2)
-
-    def carregar_dados(self):
-        with self._arquivo_lock_exclusivo():
-            if not self.arquivo_dados.exists():
-                return
-
-            try:
-                with self.arquivo_dados.open("r", encoding="utf-8") as arquivo:
-                    dados = json.load(arquivo)
-
-                self.ocorrencias = [
-                    Ocorrencia.from_dict(item)
-                    for item in dados.get("ocorrencias", [])
-                ]
-                # Garante que o próximo ID não "ande para trás" mesmo com arquivo editado manualmente.
-                self.proximo_id = max(dados.get("proximo_id", 1), self._calcular_proximo_id())
-            except (json.JSONDecodeError, OSError, KeyError, TypeError):
-                # Se o JSON estiver inválido/corrompido, o sistema inicia limpo para não travar.
-                self.ocorrencias = []
-                self.proximo_id = 1
-
     def _calcular_proximo_id(self):
-        if not self.ocorrencias:
+        ids = [
+            item.id
+            for item in [*self.ocorrencias, *self.equipamentos]
+        ]
+
+        if not ids:
             return 1
 
-        return max(ocorrencia.id for ocorrencia in self.ocorrencias) + 1
+        return max(ids) + 1
 
     def _normalizar_status(self, status):
         if not isinstance(status, str):
@@ -151,9 +126,14 @@ class SistemaOcorrencias:
                 Ocorrencia.from_dict(item)
                 for item in dados.get("ocorrencias", [])
             ]
+            self.equipamentos = [
+                Equipamento.from_dict(item)
+                for item in dados.get("equipamentos", [])
+            ]
             self.proximo_id = max(dados.get("proximo_id", 1), self._calcular_proximo_id())
         except (json.JSONDecodeError, OSError, KeyError, TypeError):
             self.ocorrencias = []
+            self.equipamentos = []
             self.proximo_id = 1
 
     @contextmanager
@@ -196,18 +176,19 @@ class SistemaOcorrencias:
 
     #métodos de equipamento
     def criar_equipamento(self, nome, codigo, localizacao):
-        equipamento = Equipamento(
-            self.proximo_id,
-            nome,
-            codigo,
-            localizacao
-        )
+        def _operacao():
+            equipamento = Equipamento(
+                self.proximo_id,
+                nome,
+                codigo,
+                localizacao
+            )
 
-        self.equipamentos.append(equipamento)
-        self.proximo_id += 1
-        self.salvar_dados()
+            self.equipamentos.append(equipamento)
+            self.proximo_id += 1
+            return equipamento
 
-        return equipamento
+        return self._executar_atomicamente(_operacao)
 
     def listar_equipamentos(self):
         return self.equipamentos

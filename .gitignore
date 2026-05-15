@@ -1,7 +1,10 @@
 __pycache__/
-__pycache__/
-__pycache__/
+*.pyc
+.pytest_cache/
+.pytest_tmp/
+.ruff_cache/
+.venv/
 ocorrencias.json.lock
 .vscode/
-__pycache__/
 .idea/
+Microsoft/
