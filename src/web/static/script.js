@@ -647,7 +647,7 @@ function visualizarHistoricoEquipamento(equipamentoId) {
     if (!equipamento) return;
 
     const urlEquipamento =
-`${window.location.origin}/equipamentos/${equipamento.codigo}`;
+`${window.location.origin}/equipamentos/code/${encodeURIComponent(equipamento.codigo)}`;
 
 const qrCodeUrl =
 `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(urlEquipamento)}`;
@@ -1114,16 +1114,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                     visualizarHistoricoEquipamento(equipamento.id);
                 }
             } else if (partes.length >= 2) {
-                // Rota fallback: /equipamentos/<id>
-                const possibilidadeId = partes[1];
-                const idNumerico = Number(possibilidadeId);
-                if (!Number.isNaN(idNumerico) && idNumerico > 0) {
-                    const equipamento = obterEquipamentoPorId(idNumerico);
-                    if (equipamento) {
-                        estado.visualizacaoAtual = 'equipamentos';
-                        renderizar();
-                        visualizarHistoricoEquipamento(idNumerico);
-                    }
+                // Rotas fallback: /equipamentos/<id> ou /equipamentos/<codigo>
+                const identificador = decodeURIComponent(partes[1]);
+                const idNumerico = Number(identificador);
+                const equipamento = !Number.isNaN(idNumerico) && idNumerico > 0
+                    ? obterEquipamentoPorId(idNumerico)
+                    : obterEquipamentoPorCodigo(identificador);
+
+                if (equipamento) {
+                    estado.visualizacaoAtual = 'equipamentos';
+                    renderizar();
+                    visualizarHistoricoEquipamento(equipamento.id);
                 }
             }
         }
