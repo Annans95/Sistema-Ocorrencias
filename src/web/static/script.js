@@ -683,7 +683,7 @@ const qrCodeUrl =
 
     //cabeçalho do modal
     cabecalho.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+        <div class="cabecalho-historico-topo">
             <div>
                 <h2>${equipamento.nome}</h2>
                 <p><strong>Código:</strong> ${equipamento.codigo} | <strong>Local:</strong> ${equipamento.localizacao}</p>
@@ -764,14 +764,14 @@ function abrirEditarEquipamento() {
     cabecalho.innerHTML = `
         <button type="button" class="botao-fechar-historico" onclick="fecharModalHistoricoEquipamento()">✖️</button>
         <h2>Editar Equipamento</h2>
-        <div style="margin-top:0.5rem;">
-            <input id="editarEqNome" placeholder="Nome" value="${equipamento.nome}" style="width:60%; padding:6px; margin-right:8px;">
-            <input id="editarEqCodigo" placeholder="Código" value="${equipamento.codigo}" style="width:30%; padding:6px;">
+        <div class="linha-edicao-equipamento">
+            <input id="editarEqNome" placeholder="Nome" value="${equipamento.nome}">
+            <input id="editarEqCodigo" placeholder="Código" value="${equipamento.codigo}">
         </div>
-        <div style="margin-top:0.5rem;">
-            <input id="editarEqLocalizacao" placeholder="Localização" value="${equipamento.localizacao}" style="width:100%; padding:6px;">
+        <div class="linha-edicao-equipamento">
+            <input id="editarEqLocalizacao" placeholder="Localização" value="${equipamento.localizacao}">
         </div>
-        <div style="margin-top:0.75rem; display:flex; gap:8px;">
+        <div class="acoes-edicao-equipamento">
             <button type="button" class="botao-primario" onclick="salvarEdicaoEquipamento()">💾 Salvar</button>
             <button type="button" class="botao-cancelar" onclick="visualizarHistoricoEquipamento('${equipamento.id}')">✖ Cancelar</button>
         </div>
