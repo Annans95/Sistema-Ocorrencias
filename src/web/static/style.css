@@ -38,6 +38,13 @@ body {
     gap: 1rem;
 }
 
+.cabecalho-acoes {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .botao-voltar {
     width: 48px;
     height: 48px;
@@ -420,6 +427,8 @@ body {
     font-weight: 600;
     color: #424242;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .acoes-ocorrencia {
@@ -489,6 +498,8 @@ body {
     font-size: 0.75rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 .rodape-ocorrencia {
@@ -587,6 +598,7 @@ body {
     color: #6A1B9A;
     margin-bottom: 0.5rem;
     transition: color 0.3s;
+    overflow-wrap: anywhere;
 }
 
 .card-equipamento:hover .info-equipamento h3 {
@@ -596,6 +608,7 @@ body {
 .info-equipamento p {
     font-size: 0.875rem;
     color: #7B1FA2;
+    overflow-wrap: anywhere;
 }
 
 .contagem-equipamento {
@@ -740,6 +753,19 @@ body {
     gap: 0.5rem;
     align-items: center;
 }
+
+.cabecalho-historico-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cabecalho-historico-topo h2,
+.cabecalho-historico-topo p {
+    overflow-wrap: anywhere;
+}
 /* Modal */
 .modal {
     position: fixed;
@@ -873,6 +899,35 @@ body {
     gap: 0.75rem;
     padding-top: 1rem;
     border-top: 1px solid #F5F5F5;
+}
+
+.linha-edicao-equipamento {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.linha-edicao-equipamento input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid #CE93D8;
+    font: inherit;
+}
+
+.linha-edicao-equipamento input:first-child {
+    flex: 2;
+}
+
+.linha-edicao-equipamento input:last-child {
+    flex: 1;
+}
+
+.acoes-edicao-equipamento {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 .botao-primario,
@@ -1017,6 +1072,8 @@ body {
     font-weight: 600;
     color: #424242;
     flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .card-historico p {
@@ -1080,10 +1137,40 @@ body {
 @media (max-width: 640px) {
     .cabecalho-container {
         padding: 1rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .cabecalho-esquerda {
+        align-items: flex-start;
+    }
+
+    .cabecalho-acoes {
+        justify-content: stretch;
+    }
+
+    .cabecalho-acoes .botao-equipamentos {
+        flex: 1;
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
     }
 
     #cabecalhoTitulo {
-        font-size: 1.5rem;
+        font-size: 1.35rem;
+        line-height: 1.2;
+    }
+
+    #cabecalhoSubtitulo {
+        font-size: 0.8rem;
+    }
+
+    .botao-voltar,
+    .cabecalho-icone {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        flex: 0 0 42px;
     }
 
     .botao-equipamentos span {
@@ -1096,17 +1183,127 @@ body {
 
     .grade-estatisticas {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .card-estatistica {
+        border-radius: 16px;
+        padding: 1rem;
+    }
+
+    .info-estatistica h3 {
+        font-size: 2rem;
+    }
+
+    .icone-estatistica {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
     }
 
     .grade-principal {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .formulario-card {
+        position: static;
+    }
+
+    .card {
+        border-radius: 16px;
+        padding: 1rem;
     }
 
     .abas {
         flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .lista-ocorrencias {
+        max-height: none;
+        padding-right: 0;
+    }
+
+    .cabecalho-ocorrencia,
+    .cabecalho-equipamento,
+    .cabecalho-card-historico,
+    .rodape-card-historico {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: stretch;
+    }
+
+    .acoes-ocorrencia {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .botao-excluir {
+        opacity: 1;
+    }
+
+    .contagem-equipamento {
+        text-align: left;
+    }
+
+    .estatisticas-equipamento,
+    .estatisticas-historico-equipamento {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .modal {
+        align-items: flex-start;
+        padding: 0.5rem;
     }
 
     .modal-conteudo {
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 1rem;
+        max-height: calc(100vh - 1rem);
+    }
+
+    .modal-conteudo.modal-grande {
+        padding: 0;
+    }
+
+    .modal-cabecalho,
+    .modal-rodape {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .modal-acoes {
+        align-self: flex-end;
+    }
+
+    .cabecalho-historico-equipamento {
+        border-radius: 16px 16px 0 0;
+        padding: 1rem;
+    }
+
+    .cabecalho-historico-equipamento h2 {
+        font-size: 1.35rem;
+        padding-right: 2.75rem;
+    }
+
+    .cabecalho-historico-topo {
+        flex-direction: column;
+    }
+
+    .cabecalho-historico-acoes {
+        flex-wrap: wrap;
+        padding-right: 2.75rem;
+    }
+
+    .lista-historico {
+        padding: 1rem;
+    }
+
+    .linha-edicao-equipamento,
+    .acoes-edicao-equipamento {
+        flex-direction: column;
     }
 }
