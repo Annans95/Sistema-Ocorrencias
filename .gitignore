@@ -8,3 +8,5 @@ ocorrencias.json.lock
 .vscode/
 .idea/
 Microsoft/
+.env
+.venv
