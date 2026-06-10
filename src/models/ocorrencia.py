@@ -1,6 +1,5 @@
 from datetime import datetime
 
-
 class Ocorrencia:
     def __init__(self, id, titulo, descricao, equipamentoId=None):
         self.id = id
@@ -8,6 +7,7 @@ class Ocorrencia:
         self.descricao = descricao
         self.status = "aberta"
         self.data_criacao = datetime.now()
+        self.data_atualizacao = datetime.now()
         self.equipamentoId = equipamentoId
 
     def __str__(self):
@@ -21,6 +21,7 @@ class Ocorrencia:
             "descricao": self.descricao,
             "status": self.status,
             "data_criacao": self.data_criacao.isoformat(),
+            "data_atualizacao": self.data_atualizacao.isoformat(),
         }
         if self.equipamentoId is not None:
             data["equipamentoId"] = self.equipamentoId
@@ -36,5 +37,11 @@ class Ocorrencia:
         data_criacao = data.get("data_criacao")
         if data_criacao:
             ocorrencia.data_criacao = datetime.fromisoformat(data_criacao)
+
+        data_atualizacao = data.get("data_atualizacao")
+        if data_atualizacao:
+            ocorrencia.data_atualizacao = datetime.fromisoformat(
+                data_atualizacao
+            )
 
         return ocorrencia

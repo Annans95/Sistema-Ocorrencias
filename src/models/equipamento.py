@@ -1,10 +1,14 @@
+from datetime import datetime
 
 class Equipamento:
-    def __init__(self, id, nome, codigo, localizacao):
+    def __init__(self, id, nome, codigo, localizacao, descricao="", data_cadastro=None, ativo=True):
         self.id = id
         self.nome = nome
         self.codigo = codigo
+        self.descricao = descricao
         self._localizacao = localizacao
+        self.data_cadastro = data_cadastro or datetime.now()
+        self.ativo = ativo
 
     @property
     def localizacao(self):
@@ -28,15 +32,25 @@ class Equipamento:
             "id": self.id,
             "nome": self.nome,
             "codigo": self.codigo,
-            "localizacao": self.localizacao
+            "localizacao": self.localizacao,
+            "data_cadastro": self.data_cadastro.isoformat(),
+            "ativo": self.ativo
         }
     @classmethod
     def from_dict(cls, data):
         # Reconstrói o objeto vindo do JSON salvo no disco.
         localizacao = data.get("localizacao", data.get("localização"))
+
+        data_cadastro = data.get("data_cadastro")
+        if data_cadastro:
+            data_cadastro = datetime.fromisoformat(data_cadastro)
+
         return cls(
             data["id"],
             data["nome"],
             data["codigo"],
-            localizacao
+            localizacao,
+            descricao=data.get("descricao", ""),
+            data_cadastro=data_cadastro,
+            ativo=data.get("ativo", True)
         )

@@ -2,6 +2,7 @@ import json
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from datetime import datetime
 
 from src.models.equipamento import Equipamento
 from src.models.ocorrencia import Ocorrencia
@@ -42,6 +43,7 @@ class SistemaOcorrencias:
             for o in self.ocorrencias:
                 if o.id == id:
                     o.status = novo_status_normalizado
+                    o.data_atualizacao = datetime.now()
                     return True
             return False
         
@@ -53,10 +55,13 @@ class SistemaOcorrencias:
                 if o.id == id:
                     if titulo is not None:
                         o.titulo = titulo
+                        o.data_atualizacao = datetime.now()
                     if descricao is not None:
                         o.descricao = descricao
+                        o.data_atualizacao = datetime.now()
                     if equipamentoId is not None:
                         o.equipamentoId = equipamentoId
+                        o.data_atualizacao = datetime.now()
                     return True
             return False
         
