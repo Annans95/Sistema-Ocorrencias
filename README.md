@@ -4,7 +4,15 @@
 
 **Deploy:** [https://sistema-ocorrencias-web.onrender.com](https://sistema-ocorrencias-web.onrender.com)
 
-**Versão atual:** 1.1.0
+**Repositório:** [https://github.com/Annans95/Sistema-Ocorrencias](https://github.com/Annans95/Sistema-Ocorrencias)
+
+**Versão atual:** 1.2.0
+
+## 👩‍💻 Autoria
+
+**Autora do sistema:** Anna Nicolly da Silva
+
+**Colaboradora:** Anne Caroline Gonçalves de Mesquita
 
 ## 📌 Descrição do Problema
 
@@ -60,7 +68,6 @@ O sistema possui três formas de uso:
 - Consome API pública externa para gerar QR Codes
 - Acessar a aplicação por link público via deploy no Render
 
-
 ## 🤝 Integração com API Pública
 
 A versão web utiliza a API pública **QR Server API** para gerar QR Codes dos equipamentos:
@@ -69,12 +76,31 @@ A versão web utiliza a API pública **QR Server API** para gerar QR Codes dos e
 
 Cada QR Code aponta para uma rota pública da aplicação web. Ao acessar o link, o sistema abre o histórico do equipamento correspondente, facilitando a consulta de ocorrências por patrimônio e a criação de uma nova ocorrência.
 
+## 🗃️ Banco de Dados
+
+A aplicação agora utiliza **PostgreSQL** com **Neon** como banco de dados principal.
+
+Persistência e acesso aos dados:
+
+- conexão via variável de ambiente `DATABASE_URL`
+- leitura de configuração com `python-dotenv`
+- acesso ao banco com `psycopg2-binary`
+- substituição do armazenamento em JSON por consultas SQL
+
+As entidades principais gravadas no banco são:
+
+- `equipamento`
+- `ocorrencias`
 
 ## 🛠️ Tecnologias Utilizadas
 
 - Python 3
 - Flask
 - CustomTkinter
+- PostgreSQL
+- Neon
+- psycopg2-binary
+- python-dotenv
 - Pytest
 - Ruff
 - Gunicorn
@@ -96,13 +122,13 @@ Cada QR Code aponta para uma rota pública da aplicação web. Ao acessar o link
 
 ![Modal do equipamento](<docs/Modal do equipamento - sistema de ocorrencias.png>)
 
-
 ## 📦 Instalação
 
 Antes de começar, você precisa ter:
 
 - Python 3 instalado (recomendado: 3.10 ou superior)
 - Uma IDE ou editor de código (VS Code, PyCharm ou similar)
+- Um banco PostgreSQL acessível por `DATABASE_URL`
 
 ### 1. Clone o repositório
 
@@ -128,6 +154,13 @@ venv\Scripts\activate
 source venv/bin/activate
 ```
 
+### 3. Configure o banco
+
+Crie um arquivo `.env` na raiz do projeto e defina a variável:
+
+```bash
+DATABASE_URL=sua_string_de_conexao_do_neon_ou_postgres
+```
 
 ## ▶️ Execução
 
@@ -154,7 +187,8 @@ Depois, acesse:
 ```text
 http://127.0.0.1:5003
 ```
-As interfaces CLI, GUI e Web compartilham o arquivo `ocorrencias.json` para persistência local dos dados.
+
+As interfaces CLI, GUI e Web agora usam o banco PostgreSQL para persistência dos dados.
 
 ## 🧪 Testes Automatizados
 
@@ -166,8 +200,10 @@ pytest
 
 Os testes cobrem:
 
-- fluxo principal de ocorrências;
-- criação, atualização, remoção e persistência de equipamentos;
+- conexão com banco real;
+- cadastro de equipamento no banco;
+- cadastro de ocorrência no banco;
+- criação, atualização, remoção e busca de equipamentos e ocorrências;
 - integração web com a API pública de QR Code, validando a URL gerada para o serviço externo.
 
 ## 🧹 Lint
@@ -195,11 +231,4 @@ Start Command: gunicorn src.web.app:app
 
 - **1.0.0:** primeira entrega estável, com estrutura inicial, CLI, GUI local, testes e CI.
 - **1.1.0:** entrega intermediária, com interface web, equipamentos, QR Code, integração com API pública, testes de integração e deploy.
-
-## 👩‍💻 Autora
-
-Anna Nicolly da Silva
-
-## 🔗 Repositório
-
-[Sistema de Ocorrências](https://github.com/Annans95/Sistema-Ocorrencias)
+- **1.2.0:** atualização com persistência em PostgreSQL/Neon, migração de JSON para SQL e testes automatizados para banco real.
