@@ -27,18 +27,18 @@ class Equipamento:
         self._localizacao = valor
 
     def to_dict(self):
-        # Converte para um formato simples de salvar em JSON.
         return {
             "id": self.id,
             "nome": self.nome,
             "codigo": self.codigo,
+            "descricao": self.descricao or "",
             "localizacao": self.localizacao,
             "data_cadastro": self.data_cadastro.isoformat(),
             "ativo": self.ativo
         }
+
     @classmethod
     def from_dict(cls, data):
-        # Reconstrói o objeto vindo do JSON salvo no disco.
         localizacao = data.get("localizacao", data.get("localização"))
 
         data_cadastro = data.get("data_cadastro")

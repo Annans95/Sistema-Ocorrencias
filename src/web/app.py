@@ -52,7 +52,6 @@ def index():
 @app.route("/api/ocorrencias")
 def api_ocorrencias():
     with sistema_lock:
-        sistema.carregar_dados()
         return jsonify([
             _ocorrencia_para_json(o) for o in sistema.listar_ocorrencias()
         ])
@@ -137,7 +136,6 @@ def excluir_ocorrencia_api(occ_id):
 @app.route("/api/equipamentos", methods=["GET"])
 def listar_equipamentos():
     with sistema_lock:
-        sistema.carregar_dados()
         return jsonify([
             e.to_dict() for e in sistema.listar_equipamentos()
         ])
@@ -196,8 +194,7 @@ def equipamento_api(eq_id):
 @app.route("/api/equipamentos/code/<codigo>", methods=["GET"])
 def obter_equipamento_por_codigo(codigo):
     with sistema_lock:
-        # Busca por codigo textual com correspondencia exata.
-        eq = next((e for e in sistema.listar_equipamentos() if e.codigo == codigo), None)
+        eq = sistema.buscar_equipamento_por_codigo(codigo)
         if not eq:
             return jsonify({"erro": "equipamento nao encontrado"}), 404
         return jsonify(eq.to_dict())
@@ -223,7 +220,7 @@ def obter_url_qr_equipamento(eq_id):
 
 @app.route('/api/reload', methods=['POST'])
 def reload_data_api():
-    """Recarrega os dados do arquivo JSON em tempo de execução (útil após edição manual)."""
+    """Atualiza os dados em memoria a partir do banco."""
     with sistema_lock:
         try:
             sistema.carregar_dados()
