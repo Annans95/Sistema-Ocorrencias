@@ -1,102 +1,210 @@
-import json
-import os
-from contextlib import contextmanager
-from pathlib import Path
-from datetime import datetime
-
 from src.models.equipamento import Equipamento
 from src.models.ocorrencia import Ocorrencia
+from src.database.conexao import conectar
 
 
 class SistemaOcorrencias:
-    def __init__(self, arquivo_dados=None):
+    def __init__(self):
         self.ocorrencias = []
         self.equipamentos = []
-        self.proximo_id = 1
-        if arquivo_dados is None:
-            # Caminho padrão usado pela aplicação (raiz do projeto).
-            self.arquivo_dados = Path(__file__).resolve().parents[2] / "ocorrencias.json"
-        else:
-            # Permite injetar outro arquivo (ex.: testes com tmp_path).
-            self.arquivo_dados = Path(arquivo_dados)
-        self.arquivo_lock = self.arquivo_dados.with_suffix(self.arquivo_dados.suffix + ".lock")
         self.carregar_dados()
 
     def criar_ocorrencia(self, titulo, descricao, equipamentoId=None):
-        def _operacao():
-            ocorrencia = Ocorrencia(self.proximo_id, titulo, descricao, equipamentoId=equipamentoId)
-            self.ocorrencias.append(ocorrencia)
-            self.proximo_id += 1
-            return ocorrencia
         
-        return self._executar_atomicamente(_operacao)
+        conn = conectar() #Abre a conexão
+        cursor = conn.cursor() #objeto que executa os comandos SQL
+
+        cursor.execute("""
+            INSERT INTO ocorrencias 
+            (titulo, descricao, status, equipamento_id)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id, titulo, descricao, status,
+            data_criacao, data_atualizacao, equipamento_id;
+        """, 
+        (
+            titulo, 
+            descricao, 
+            "aberta", 
+            equipamentoId
+        ))
+                       
+        linha = cursor.fetchone() #captura dos dados retornados pelo RETURNING
+
+        conn.commit() #salva permanentemente a alteração no bd
+
+        cursor.close()
+        conn.close()
+
+        #Mapeamento para Objeto
+        ocorrencia = Ocorrencia(
+            linha[0],
+            linha[1],
+            linha[2],
+            equipamentoId=linha[6] if len(linha) > 6 else None
+        )
+
+        ocorrencia.status = linha[3]
+        ocorrencia.data_criacao = linha[4]
+        ocorrencia.data_atualizacao = linha[5]
+
+        return ocorrencia
 
     def listar_ocorrencias(self):
-        return self.ocorrencias
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                       SELECT id, titulo, descricao, status,
+                       data_criacao, data_atualizacao, equipamento_id
+                       FROM ocorrencias
+                       ORDER BY id;
+                       """)
+        linhas = cursor.fetchall()
+
+        ocorrencias = []
+
+        for linha in linhas:
+            ocorrencia = Ocorrencia(
+                linha[0],
+                linha[1],
+                linha[2],
+                equipamentoId=linha[6] if len(linha) > 6 else None
+            )
+
+            ocorrencia.status = linha[3]
+            ocorrencia.data_criacao = linha[4]
+            ocorrencia.data_atualizacao = linha[5]
+
+            ocorrencias.append(ocorrencia)
+
+        cursor.close()
+        conn.close()
+
+        return ocorrencias
 
     def atualizar_status(self, id, novo_status):
         novo_status_normalizado = self._normalizar_status(novo_status)
         if novo_status_normalizado not in {"aberta", "em andamento", "resolvida"}:
             return False
 
-        def _operacao():
-            for o in self.ocorrencias:
-                if o.id == id:
-                    o.status = novo_status_normalizado
-                    o.data_atualizacao = datetime.now()
-                    return True
-            return False
-        
-        return self._executar_atomicamente(_operacao)
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                       UPDATE ocorrencias
+                       SET status = %s,
+                       data_atualizacao = CURRENT_TIMESTAMP
+                       WHERE id = %s
+                       RETURNING id;
+                       """,
+                       (
+                        novo_status_normalizado,
+                        id
+                       ))
+        resultado = cursor.fetchone()
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return resultado is not None
 
     def atualizar_ocorrencia(self, id, titulo=None, descricao=None, equipamentoId=None):
-        def _operacao():
-            for o in self.ocorrencias:
-                if o.id == id:
-                    if titulo is not None:
-                        o.titulo = titulo
-                        o.data_atualizacao = datetime.now()
-                    if descricao is not None:
-                        o.descricao = descricao
-                        o.data_atualizacao = datetime.now()
-                    if equipamentoId is not None:
-                        o.equipamentoId = equipamentoId
-                        o.data_atualizacao = datetime.now()
-                    return True
+        
+        campos = []
+        valores = []
+
+        if titulo is not None:
+            campos.append("titulo = %s")
+            valores.append(titulo)
+        
+        if descricao is not None:
+            campos.append("descricao = %s")
+            valores.append(descricao)
+        
+        if equipamentoId is not None:
+            campos.append("equipamento_id = %s")
+            valores.append(equipamentoId)
+        
+        if not campos:
             return False
         
-        return self._executar_atomicamente(_operacao)
+        campos.append("data_atualizacao = CURRENT_TIMESTAMP")
 
+        valores.append(id)
+
+        query = f"""
+            UPDATE ocorrencias
+            SET {", ".join(campos)}
+            WHERE id = %s
+            RETURNING id;
+        """
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute(query, valores)
+
+        resultado = cursor.fetchone()
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return resultado is not None
+        
     def buscar_ocorrencia_por_id(self, id):
-        for o in self.ocorrencias:
-            if o.id == id:
-                return o
-        return None
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT id, titulo, descricao, status,
+                data_criacao, data_atualizacao,
+                equipamento_id
+        FROM ocorrencias
+        WHERE id = %s;
+                       """,(id,))
+        
+        linha = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if linha is None:
+            return None
+        
+        ocorrencia = Ocorrencia(
+            linha[0],
+            linha[1],
+            linha[2],
+            equipamentoId=linha[6]
+        )
+
+        ocorrencia.status = linha[3]
+        ocorrencia.data_criacao = linha[4]
+        ocorrencia.data_atualizacao = linha[5]
+
+        return ocorrencia
 
     def remover_ocorrencia(self, id):
-        def _operacao():
-            tamanho_antigo = len(self.ocorrencias)
-            self.ocorrencias = [
-                o for o in self.ocorrencias if o.id != id
-            ]
-            # Só grava no arquivo se realmente houve alteração.
-            if len(self.ocorrencias) != tamanho_antigo:
-                return True
-            return False
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+                    DELETE FROM ocorrencias
+                    WHERE id = %s
+                    RETURNING id;
+                       """, (id,))
         
-        return self._executar_atomicamente(_operacao)
+        resultado = cursor.fetchone()
 
-    def _calcular_proximo_id(self):
-        ids = [
-            item.id
-            for item in [*self.ocorrencias, *self.equipamentos]
-        ]
+        conn.commit()
 
-        if not ids:
-            return 1
+        cursor.close()
+        conn.close()
 
-        return max(ids) + 1
-
+        return resultado is not None
     def _normalizar_status(self, status):
         if not isinstance(status, str):
             return ""
@@ -106,176 +214,213 @@ class SistemaOcorrencias:
             return "em andamento"
         return valor
 
-    def _executar_atomicamente(self, operacao):
-        """Padrão read-modify-write atomicamente: relê disco, executa operação, escreve disco.
-        
-        Isso garante que mesmo com múltiplos processos, cada um tem visão atualizada antes de modificar.
-        """
-        with self._arquivo_lock_exclusivo():
-            self._carregar_dados_unlocked()
-            resultado = operacao()
-            if resultado is not False:
-                self.salvar_dados()
-            return resultado
-
-    def _carregar_dados_unlocked(self):
-        """Carrega dados sem adquirir lock (deve ser chamado dentro de _arquivo_lock_exclusivo)."""
-        if not self.arquivo_dados.exists():
-            return
-
-        try:
-            with self.arquivo_dados.open("r", encoding="utf-8") as arquivo:
-                dados = json.load(arquivo)
-
-            self.ocorrencias = [
-                Ocorrencia.from_dict(item)
-                for item in dados.get("ocorrencias", [])
-            ]
-            self.equipamentos = [
-                Equipamento.from_dict(item)
-                for item in dados.get("equipamentos", [])
-            ]
-            self.proximo_id = max(dados.get("proximo_id", 1), self._calcular_proximo_id())
-        except (json.JSONDecodeError, OSError, KeyError, TypeError):
-            self.ocorrencias = []
-            self.equipamentos = []
-            self.proximo_id = 1
-
-    @contextmanager
-    def _arquivo_lock_exclusivo(self):
-        self.arquivo_lock.parent.mkdir(parents=True, exist_ok=True)
-        with self.arquivo_lock.open("a+b") as lock_file:
-            self._bloquear_arquivo(lock_file)
-            try:
-                yield
-            finally:
-                self._desbloquear_arquivo(lock_file)
-
-    def _bloquear_arquivo(self, lock_file):
-        if os.name == "nt":
-            import msvcrt
-
-            lock_file.seek(0)
-            if lock_file.tell() == 0:
-                lock_file.write(b"0")
-                lock_file.flush()
-            lock_file.seek(0)
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
-            return
-
-        import fcntl
-
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
-
-    def _desbloquear_arquivo(self, lock_file):
-        if os.name == "nt":
-            import msvcrt
-
-            lock_file.seek(0)
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-            return
-
-        import fcntl
-
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+    def carregar_dados(self):
+        self.ocorrencias = self.listar_ocorrencias()
+        self.equipamentos = self.listar_equipamentos()
 
     #métodos de equipamento
     def criar_equipamento(self, nome, codigo, localizacao):
-        def _operacao():
-            equipamento = Equipamento(
-                self.proximo_id,
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO equipamento
+            (
                 nome,
                 codigo,
                 localizacao
             )
+            VALUES (%s, %s, %s)
+            RETURNING id, codigo, nome, descricao,
+                    localizacao, data_cadastro, ativo;
+        """,
+        (
+            nome,
+            codigo,
+            localizacao
+        ))
 
-            self.equipamentos.append(equipamento)
-            self.proximo_id += 1
-            return equipamento
+        linha = cursor.fetchone()
 
-        return self._executar_atomicamente(_operacao)
+        conn.commit()
 
-    def listar_equipamentos(self):
-        return self.equipamentos
+        cursor.close()
+        conn.close()
 
-    def buscar_equipamento_por_id(self, id):
-        return next(
-            (e for e in self.equipamentos if e.id == id),
-            None
+        equipamento = Equipamento(
+            linha[0],
+            linha[2],
+            linha[1],
+            linha[4]
         )
 
-    def remover_equipamento(self, id):
-        def _operacao():
-            tamanho_antigo = len(self.equipamentos)
-            self.equipamentos = [
-                e for e in self.equipamentos if e.id != id
-            ]
-            if len(self.equipamentos) != tamanho_antigo:
-                return True
-            return False
-        
-        return self._executar_atomicamente(_operacao)
+        equipamento.descricao = linha[3] or ""
+        equipamento.data_cadastro = linha[5]
+        equipamento.ativo = linha[6]
 
-    def atualizar_equipamento(self, id, nome=None, codigo=None, localizacao=None):
-        def _operacao():
-            for e in self.equipamentos:
-                if e.id == id:
-                    if nome is not None:
-                        e.nome = nome
-                    if codigo is not None:
-                        e.codigo = codigo
-                    if localizacao is not None:
-                        e.localizacao = localizacao
-                        e.localização = localizacao
-                    return True
-            return False
+        return equipamento
 
-        return self._executar_atomicamente(_operacao)
+    def listar_equipamentos(self):
+        conn = conectar()
+        cursor = conn.cursor()
 
-    #salvar dados no JSON
-    def salvar_dados(self):
-        dados = {
-            "proximo_id": self.proximo_id,
-            "ocorrencias": [
-                o.to_dict() for o in self.ocorrencias
-            ],
-            "equipamentos": [
-                e.to_dict() for e in self.equipamentos
-            ]
-        }
+        cursor.execute("""
+            SELECT id, nome, codigo, descricao,
+                    localizacao, data_cadastro, ativo
+            FROM equipamento
+            WHERE ativo = TRUE
+            ORDER BY id;
+        """)
 
-        with self.arquivo_dados.open("w", encoding="utf-8") as arquivo:
-            json.dump(dados, arquivo, ensure_ascii=False, indent=2)
+        linhas = cursor.fetchall()
 
-    #carregar dados de equipamento
-    def carregar_dados(self):
+        equipamentos = []
 
-        if not self.arquivo_dados.exists():
-            self.ocorrencias = []
-            self.equipamentos = []
-            self.proximo_id = 1
-            return
-
-        try:
-            with self.arquivo_dados.open("r", encoding="utf-8") as arquivo:
-                dados = json.load(arquivo)
-
-            self.ocorrencias = [
-                Ocorrencia.from_dict(item)
-                for item in dados.get("ocorrencias", [])
-            ]
-
-            self.equipamentos = [
-                Equipamento.from_dict(item)
-                for item in dados.get("equipamentos", [])
-            ]
-
-            self.proximo_id = max(
-                dados.get("proximo_id", 1),
-                self._calcular_proximo_id()
+        for linha in linhas:
+            equipamento = Equipamento(
+                linha[0],
+                linha[1],
+                linha[2],
+                linha[4]
             )
 
-        except (json.JSONDecodeError, OSError, KeyError, TypeError):
-            self.ocorrencias = []
-            self.equipamentos = []
-            self.proximo_id = 1
+            equipamento.descricao = linha[3]
+            equipamento.data_cadastro = linha[5]
+            equipamento.ativo = linha[6]
+
+            equipamentos.append(equipamento)
+
+        cursor.close()
+        conn.close()
+
+        return equipamentos
+
+    def buscar_equipamento_por_id(self, id):
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, codigo, nome, descricao,
+                localizacao, data_cadastro, ativo
+            FROM equipamento
+            WHERE id = %s
+            AND ativo = TRUE;
+            """, (id,))
+
+        linha = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if linha is None:
+            return None
+        
+        equipamento = Equipamento(
+            linha[0],
+            linha[2],
+            linha[1],
+            linha[4]
+        )
+
+        equipamento.descricao = linha[3] or ""
+        equipamento.data_cadastro = linha[5]
+        equipamento.ativo = linha[6]
+
+        return equipamento
+
+    def remover_equipamento(self, id):
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            UPDATE equipamento
+            SET ativo = FALSE
+            WHERE id = %s
+            RETURNING id;
+            """, (id,))
+
+        resultado = cursor.fetchone()
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return resultado is not None
+
+    def atualizar_equipamento(self, id, nome=None, codigo=None, localizacao=None):
+        campos = []
+        valores = []
+
+        if nome is not None:
+            campos.append("nome = %s")
+            valores.append(nome)
+        
+        if codigo is not None:
+            campos.append("codigo = %s")
+            valores.append(codigo)
+        
+        if localizacao is not None:
+            campos.append("localizacao = %s")
+            valores.append(localizacao)
+        
+        if not campos:
+            return False
+        
+        valores.append(id)
+
+        query = f"""
+            UPDATE equipamento
+            SET {", ".join(campos)}
+            WHERE id = %s
+            RETURNING id;
+        """
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute(query, valores)
+
+        resultado = cursor.fetchone()
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return resultado is not None
+
+    def buscar_equipamento_por_codigo(self, codigo):
+
+        conn = conectar()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT id, codigo, nome, descricao,
+                localizacao, data_cadastro, ativo
+            FROM equipamento
+            WHERE codigo = %s
+            AND ativo = TRUE;
+        """, (codigo,))
+
+        linha = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if linha is None:
+            return None
+
+        equipamento = Equipamento(
+            linha[0],
+            linha[2],
+            linha[1],
+            linha[4]
+        )
+
+        equipamento.descricao = linha[3] or ""
+        equipamento.data_cadastro = linha[5]
+        equipamento.ativo = linha[6]
+
+        return equipamento

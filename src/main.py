@@ -73,37 +73,56 @@ def criar_equipamento_cli():
         return
 
     sistema.criar_equipamento(nome, codigo, localizacao)
-    print("Equipamento criado e salvo no JSON!")
+    print("Equipamento criado e salvo no Banco!")
 
 
 def editar_equipamento_cli():
     print("\n=== Editar Equipamento ===")
-    entrada = input("ID do equipamento: ").strip()
-    if entrada.lower() == 'v':
-        return
-    try:
-        eq_id = int(entrada)
-    except ValueError:
-        print("ID inválido")
-        return
 
+    # --- INÍCIO DA VALIDAÇÃO DO ID EM LOOP ---
+    while True:
+        entrada = input("ID do equipamento (ou 'v' para voltar): ").strip()
+
+        if entrada.lower() == 'v':
+            return  # Sai da função e volta para o menu
+
+        if entrada == "":
+            print("Erro: O ID do equipamento é obrigatório!")
+            continue  # Força o loop a perguntar de novo
+
+        try:
+            eq_id = int(entrada)
+            break  # ID é um número válido, sai do loop
+        except ValueError:
+            print("Erro: ID inválido! Digite um número inteiro.")
+    # --- FIM DA VALIDAÇÃO DO ID ---
+
+    # Busca o equipamento para ver se ele existe antes de continuar
     eq = sistema.buscar_equipamento_por_id(eq_id)
     if not eq:
-        print("Equipamento não encontrado")
+        print("Equipamento não encontrado.")
         return
 
-    nome = input(f"Nome [{eq.nome}]: ").strip()
-    codigo = input(f"Código [{eq.codigo}]: ").strip()
-    localizacao = input(f"Localização [{eq.localizacao}]: ").strip()
+    # Coleta as novas informações mostrando o que já existe hoje
+    nome = input(f"Nome [{eq.nome}](enter mantém): ").strip()
+    codigo = input(f"Código [{eq.codigo}](enter mantém): ").strip()
+    localizacao = input(f"Localização [{eq.localizacao}](enter mantém): ").strip()
 
+    # Transforma strings vazias (apenas Enter) em None
     nome = nome if nome else None
     codigo = codigo if codigo else None
     localizacao = localizacao if localizacao else None
 
+    # --- NOVA VALIDAÇÃO: SE TUDO FOR NONE, NADA MUDOU ---
+    if nome is None and codigo is None and localizacao is None:
+        print("\n Nenhuma alteração foi feita. O equipamento foi mantido igual.")
+        return  # Encerra aqui sem precisar atualizar o banco
+
+    # --- ENVIO PARA O BANCO (Só acontece se algo mudou) ---
     if sistema.atualizar_equipamento(eq_id, nome=nome, codigo=codigo, localizacao=localizacao):
-        print("Equipamento atualizado e salvo no JSON!")
+        print("Equipamento atualizado e salvo no Banco!")
     else:
-        print("Falha ao atualizar equipamento")
+        print("Falha ao atualizar equipamento.")
 
 
 def apagar_equipamento_cli():
@@ -128,7 +147,7 @@ def apagar_equipamento_cli():
         return
 
     if sistema.remover_equipamento(eq_id):
-        print("Equipamento apagado e salvo no JSON!")
+        print("Equipamento apagado e salvo no Banco!")
     else:
         print("Falha ao apagar equipamento")
 
@@ -168,7 +187,7 @@ def criar_ocorrencia():
                 equipamento_id = None
 
     sistema.criar_ocorrencia(titulo, descricao, equipamentoId=equipamento_id)
-    print("Ocorrência criada e salva no JSON!")
+    print("Ocorrência criada e salva no Banco!")
 
 
 def atualizar_status():
@@ -203,7 +222,7 @@ def atualizar_status():
         return
 
     if sistema.atualizar_status(occ_id, status):
-        print("Atualizado e salvo no JSON!")
+        print("Atualizado e salvo no Banco!")
     else:
         print("Ocorrência não encontrada")
 
@@ -226,6 +245,60 @@ def ver_detalhes():
         print(formatar_ocorrencia(ocorrencia))
     else:
         print("Ocorrência não encontrada")
+
+def atualizar_ocorrencia_cli():
+    print("\n=== Editar Ocorrência ===")
+
+    while True:
+        entrada_id = input("ID da ocorrência: ").strip()
+        if entrada_id == "":
+            print("Erro: O ID da ocorrência é obrigatório!")
+            continue
+        try:
+            id = int(entrada_id)
+            break
+        except ValueError:
+            print("Erro: O ID deve ser um número inteiro válido.")
+
+    titulo = input("Novo título (enter mantém): ").strip()
+    descricao = input("Nova descrição (enter mantém): ").strip()
+    equipamentoId = input("Novo ID do equipamento (enter mantém, 'n' para remover vínculo): ").strip()
+
+    # Tratamento das entradas vazias
+    if titulo == "":
+        titulo = None
+
+    if descricao == "":
+        descricao = None
+    
+    if equipamentoId == "":
+        equipamento = None
+    elif equipamentoId.lower() == "n":
+        equipamento = "remover"
+    else:
+        try:
+            equipamento = int(equipamentoId)
+        except ValueError:
+            print("Aviso: ID do equipamento inválido. Tratando como sem alterações.")
+            equipamento = None
+
+    # --- NOVA VALIDAÇÃO: NADA FOI ALTERADO? ---
+    if titulo is None and descricao is None and equipamento is None:
+        print("\nℹ Nenhuma alteração foi feita. A ocorrência foi mantida igual.")
+        return # Encerra a função aqui mesmo, sem chamar o banco
+
+    # --- ENVIO PARA O BANCO (Só acontece se algo mudou) ---
+    sucesso = sistema.atualizar_ocorrencia(
+        id,
+        titulo=titulo,
+        descricao=descricao,
+        equipamentoId=equipamento
+    )
+
+    if sucesso:
+        print("Ocorrência atualizada no banco com sucesso!")
+    else:
+        print("Erro: Ocorrência não encontrada com o ID informado.")
 
 
 def excluir_ocorrencia():
@@ -253,7 +326,7 @@ def excluir_ocorrencia():
         return
 
     if sistema.remover_ocorrencia(occ_id):
-        print("Ocorrência excluída e salva no JSON!")
+        print("Ocorrência excluída e salva no Banco!")
     else:
         print("Não foi possível excluir a ocorrência")
 
@@ -264,11 +337,12 @@ def menu():
         print("2 - Listar ocorrências")
         print("3 - Atualizar status")
         print("4 - Ver detalhes da ocorrência")
-        print("5 - Excluir ocorrência")
-        print("6 - Listar equipamentos")
-        print("7 - Criar equipamento")
-        print("8 - Editar equipamento")
-        print("9 - Apagar equipamento")
+        print("5 - Editar ocorrencia")
+        print("6 - Excluir ocorrência")
+        print("7 - Listar equipamentos")
+        print("8 - Criar equipamento")
+        print("9 - Editar equipamento")
+        print("10 - Apagar equipamento")
         print("0 - Sair")
 
         opcao = input("Escolha: ")
@@ -282,14 +356,16 @@ def menu():
         elif opcao == "4":
             ver_detalhes()
         elif opcao == "5":
-            excluir_ocorrencia()
+            atualizar_ocorrencia_cli()
         elif opcao == "6":
-            listar_equipamentos_cli()
+            excluir_ocorrencia()
         elif opcao == "7":
-            criar_equipamento_cli()
+            listar_equipamentos_cli()
         elif opcao == "8":
-            editar_equipamento_cli()
+            criar_equipamento_cli()
         elif opcao == "9":
+            editar_equipamento_cli()
+        elif opcao == "10":
             apagar_equipamento_cli()
         elif opcao == "0":
             break
